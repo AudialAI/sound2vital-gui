@@ -258,7 +258,10 @@ link recipes recursive with a leading `+`.
 
 Applied to all four `$(CXX) -o` link recipes in the two Linux Makefiles (VST, VST3, Standalone
 plug-in, and the standalone app) so a parallel `make` works for every target, not just `vst3`.
-Nothing else changes: the same command line is run, with the jobserver descriptors kept open.
+Nothing else changes for a real build: the same command line is run, with the jobserver descriptors
+kept open. The one documented side effect of `+` is that `make -n` now actually runs those link
+commands instead of only printing them (GNU make always executes `+` lines, even in dry-run mode);
+no build path uses `make -n`.
 
 ### Fix 6 - verify stage runtime packages
 
@@ -341,3 +344,9 @@ AudialSynth.so
   `account.vital.audio` 0, `firebase` 0, `libsecret` 0, `Audial Synth` 3.
 - Emulated amd64 on this Apple Silicon Mac runs under Rosetta, so the whole clean pipeline (apt,
   compile, LTO link, pip, verify) takes about 5 minutes, not the 30-90 the brief expected.
+
+### Candidate PLUGIN_COMMIT
+
+`33720828f50324c7330cd2751e82cc83fabb21d8` (`build: Linux VST3 without auth libraries, Docker build
+and headless load check`) is the first candidate `PLUGIN_COMMIT` for the microservice image
+(`genetic_vital` plan Task 8).
