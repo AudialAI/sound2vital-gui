@@ -192,7 +192,7 @@ namespace vital {
       ValueDetails::kLinear, false, "", "Sample Tune", nullptr },
     { "sample_level", 0x000000, 0.0, 1.0, 0.70710678119, 0.0, 1.0,
       ValueDetails::kQuadratic, false, "", "Sample Level", nullptr },
-    { "sample_destination", 0x000500, 0.0, constants::kNumSourceDestinations + constants::kNumEffects, 3.0, 0.0, 1.0,
+    { "sample_destination", 0x000500, 0.0, constants::kNumSourceDestinations + constants::kNumEffects - 1, 3.0, 0.0, 1.0,
       ValueDetails::kIndexed, false, "", "Sample Destination", strings::kDestinationNames },
     { "sample_pan", 0x000000, -1.0, 1.0, 0.0, 0.0, 100.0,
       ValueDetails::kLinear, false, "%", "Sample Pan", nullptr },
@@ -344,7 +344,7 @@ namespace vital {
       ValueDetails::kLinear, false, "", "Mod Wheel", nullptr },
     { "mpe_enabled", 0x000501, 0.0, 1.0, 0.0, 0.0, 1.0,
       ValueDetails::kIndexed, false, "", "MPE Enabled", strings::kOffOnNames },
-    { "view_spectrogram", 0x000803, 0.0, 2.0, 0.0, 0.0, 1.0,
+    { "view_spectrogram", 0x000803, 0.0, 1.0, 0.0, 0.0, 1.0,
       ValueDetails::kIndexed, false, "", "View Spectrogram", strings::kOffOnNames },
   };
 
@@ -513,10 +513,10 @@ namespace vital {
       ValueDetails::kLinear, false, "%", "Frequency Morph Amount", nullptr },
     { "spectral_morph_spread", 0x000407, -0.5, 0.5, 0.0, 0.0, 200.0,
       ValueDetails::kLinear, false, "%", "Frequency Morph Spread", nullptr },
-    { "destination", 0x000500, 0.0, constants::kNumSourceDestinations + constants::kNumEffects, 0.0, 0.0, 1.0,
+    { "destination", 0x000500, 0.0, constants::kNumSourceDestinations + constants::kNumEffects - 1, 0.0, 0.0, 1.0,
       ValueDetails::kIndexed, false, "", "Destination", strings::kDestinationNames },
     { "view_2d", 0x000402, 0.0, 2.0, 1.0, 0.0, 1.0,
-      ValueDetails::kIndexed, false, "", "View 2D", strings::kOffOnNames },
+      ValueDetails::kIndexed, false, "", "View 2D", strings::kWavetableDimensionNames },
   };
 
   const ValueDetails ValueDetailsLookup::mod_parameter_list[] = {

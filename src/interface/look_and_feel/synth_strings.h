@@ -85,12 +85,21 @@ namespace strings {
     "Odd Harmonics",
   };
 
+  // The filter "style" parameter spans every filter model, so its range (0 - 9) is wider than the
+  // five styles the analog/dirty/ladder/digital models use. The remaining slots are filled so that
+  // a host asking for the text of any value in the parameter's range cannot read past the array
+  // (ValueBridge::getText indexes this table with the raw parameter value).
   const std::string kFilterStyleNames[] = {
     "12dB",
     "24dB",
     "Notch Blend",
     "Notch Spread",
-    "B/P/N"
+    "B/P/N",
+    "Style 6",
+    "Style 7",
+    "Style 8",
+    "Style 9",
+    "Style 10"
   };
 
   const std::string kDiodeStyleNames[] = {

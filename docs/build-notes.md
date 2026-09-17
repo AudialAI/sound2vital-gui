@@ -209,3 +209,135 @@ auval -v aumu AuSy Audi -> AU VALIDATION SUCCEEDED.
 
 The header/about logo now draws the Audial wave mark (`Paths::vitalV()` parses the concatenated
 `d` data of `txt2vox_gui/vst3/Resources/brand/wave.svg`); this was not looked at on screen.
+
+## Task 4 - Linux VST3 in Docker (Ubuntu 22.04, headless load check)
+
+- `plugin/JuceLibraryCode/AppConfig.h` now defines `JUCE_VST3_CAN_REPLACE_VST2 0` (it was left
+  commented out, so JUCE 6.0.5 defaulted it to 1 and `juce_VST3_Wrapper.cpp` tried to include the
+  VST2 SDK, which is not vendored - only `third_party/VST_SDK/VST3_SDK` exists). Setting it in
+  `AppConfig.h` fixes it for every exporter instead of per build script; the equivalent
+  `JUCE_VST3_CAN_REPLACE_VST2=0` flag stays in `scripts/build_macos.sh` as a harmless duplicate.
+
+### Linux Makefile changes (Step 1)
+
+`plugin/builds/linux_vst/Makefile` and `standalone/builds/linux/Makefile`: `-DREQUIRE_AUTH=1` ->
+`-DNO_AUTH=1` (Debug and Release), and the firebase/libsecret include path, library path and
+`-lfirebase_auth -lfirebase_app -lsecret-1 -lglib-2.0` link flags dropped.
+
+```
+grep -c "NO_AUTH=1"  -> plugin 2, standalone 2
+grep -c "firebase"   -> plugin 0, standalone 0
+```
+
+`-I../../../third_party/VST_SDK/VST2_SDK` is left in place: the directory does not exist, and a
+missing `-I` directory is not an error for gcc.
+
+### Fix 5 - LTO link dies with "write jobserver: Bad file descriptor" (GNU make 4.3 + GCC 11)
+
+Error from the first Docker build (`make vst3 CONFIG=Release -j"$(nproc)"`, Ubuntu 22.04):
+
+```
+make[2]: *** write jobserver: Bad file descriptor.  Stop.
+lto-wrapper: fatal error: make returned 2 exit status
+compilation terminated.
+/usr/bin/ld: error: lto-wrapper failed
+collect2: error: ld returned 1 exit status
+make[1]: *** [Makefile:176: build/AudialSynth.vst3/Contents/x86_64-linux/AudialSynth.so] Error 1
+```
+
+The Release Linux configs link with `-flto`, so GCC's `lto-wrapper` runs its own `make` for the
+LTRANS phase. GNU make 4.3 (jammy) only hands the jobserver file descriptors to recipes it considers
+recursive; for every other recipe it still exports `--jobserver-auth=R,W` in `MAKEFLAGS` but closes
+the descriptors, so `lto-wrapper`'s sub-make fails. The fix is the documented one: mark the final
+link recipes recursive with a leading `+`.
+
+```diff
+-	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_VST3) ...
++	+$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_VST3) ...
+```
+
+Applied to all four `$(CXX) -o` link recipes in the two Linux Makefiles (VST, VST3, Standalone
+plug-in, and the standalone app) so a parallel `make` works for every target, not just `vst3`.
+Nothing else changes: the same command line is run, with the jobserver descriptors kept open.
+
+### Fix 6 - verify stage runtime packages
+
+`python /verify_vst3.py` failed twice before the plug-in was even reached:
+
+```
+ImportError: libatomic.so.1: cannot open shared object file: No such file or directory
+xvfb-run: error: xauth command not found
+```
+
+`pedalboard`'s native extension needs `libatomic1`, and `xvfb-run` needs `xauth` (Debian's `xvfb`
+package does not pull it in). Both added to the verify stage's `apt-get install` list in
+`docker/Dockerfile.linux-vst3`.
+
+### Fix 7 - out-of-bounds parameter-text lookup crashed every host that enumerates parameters
+
+With the plug-in built, `load_plugin` segfaulted:
+
+```
+Fatal Python error: Segmentation fault
+Current thread 0x00007ffffee86740 (most recent call first):
+  File ".../pedalboard/_pedalboard.py", line 256 in get_text_for_raw_value
+  File ".../pedalboard/_pedalboard.py", line 301 in __init__
+  File ".../pedalboard/_pedalboard.py", line 669 in _get_parameters
+  File ".../pedalboard/_pedalboard.py", line 656 in parameters
+  File ".../pedalboard/_pedalboard.py", line 637 in __set_initial_parameter_values__
+  File ".../pedalboard/_pedalboard.py", line 818 in load_plugin
+```
+
+Cause (upstream, not something Tasks 1-3 introduced). `ValueBridge::getText`
+(`src/plugin/value_bridge.h`) answers a host's "what does this value read as?" with
+
+```cpp
+result = details_.string_lookup[std::max<int>(0, std::min(adjusted, details_.max))];
+```
+
+i.e. it assumes every `string_lookup` table has `max + 1` entries. pedalboard probes each parameter
+at 1001 raw values from 0.0 to 1.0, so it asks for the text at `max` for all 2852 parameters, and
+four parameters break that assumption - the read runs past the end of a `const std::string[]` and
+dereferences garbage. The first one hit was `Filter 1 Style`. An audit of every indexed parameter
+against its table found exactly four, all fixed at the data end so that no parameter range and no
+existing display string changes:
+
+| parameter | max | table | entries | fix |
+| --- | --- | --- | --- | --- |
+| `filter_*_style` | 9 | `kFilterStyleNames` | 5 | padded the table to 10 (`Style 6` … `Style 10`) |
+| `osc_*_view_2d` | 2 | `kOffOnNames` | 2 | table changed to `kWavetableDimensionNames` (`3D`/`2D`/`SP`), which is what the control actually means |
+| `view_spectrogram` | 2 | `kOffOnNames` | 2 | max 2 -> 1; it is a toggle (`HeaderSection` reads it through a `SynthButton`) |
+| `destination`, `sample_destination` | `kNumSourceDestinations + kNumEffects` (14) | `kDestinationNames` | 14 (0-13) | max -> `... - 1`; off-by-one, index 14 named nothing and routed nowhere |
+
+The style range stays 0-9 because it has to cover every filter model (comb uses style 5); the
+per-model names the GUI shows (`FilterSection::getStyleName`) are unaffected, as they index the
+model's own table. Nothing in `src/synthesis/` was touched. After the fix, sweeping all 2852
+parameters x 1001 raw values through `get_text_for_raw_value` completes cleanly:
+
+```
+params: 2852
+ALL 2852 PARAMS SWEPT OK
+```
+
+### Task 4 result
+
+```
+scripts/build_linux_vst3.sh
+...
+#18 [verify 6/6] RUN python /verify_vst3.py ... || xvfb-run -a python /verify_vst3.py ...
+#18 2.454 rendered shape=(2, 66150) peak=0.3618
+#18 2.454 OK
+#13 exporting to client directory
+#13 copying files 13.09MB done
+AudialSynth.so
+```
+
+- `xvfb` was **not** needed: the first (no-display) `python /verify_vst3.py` succeeds, so the `||`
+  fallback never runs. `xvfb` and `xauth` stay in the image as a safety net for other hosts.
+- Exported bundle: `docker/out/AudialSynth.vst3/Contents/x86_64-linux/AudialSynth.so`,
+  13,086,448 bytes, `ELF 64-bit LSB shared object, x86-64 ... not stripped`.
+- `ldd` lists `libasound`, `libfreetype`, `libcurl`, `libGL`, `libstdc++`, `libm`, `libgcc_s`,
+  `libc` - no `libsecret`, `libglib` or firebase. `grep -ac` on the binary: `authentication` 0,
+  `account.vital.audio` 0, `firebase` 0, `libsecret` 0, `Audial Synth` 3.
+- Emulated amd64 on this Apple Silicon Mac runs under Rosetta, so the whole clean pipeline (apt,
+  compile, LTO link, pip, verify) takes about 5 minutes, not the 30-90 the brief expected.
