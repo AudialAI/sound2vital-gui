@@ -350,3 +350,40 @@ AudialSynth.so
 `33720828f50324c7330cd2751e82cc83fabb21d8` (`build: Linux VST3 without auth libraries, Docker build
 and headless load check`) is the first candidate `PLUGIN_COMMIT` for the microservice image
 (`genetic_vital` plan Task 8).
+
+## Task 6 - first build of the unit test console app (`scripts/run_tests_macos.sh`)
+
+`tests/builds/osx/AudialSynthTests.xcodeproj` had not been built in this fork before Task 6. It
+builds with no project or source fixes beyond the settings `scripts/build_macos.sh` already passes:
+
+```bash
+xcodebuild -project tests/builds/osx/AudialSynthTests.xcodeproj -target "AudialSynthTests - ConsoleApp" \
+  -configuration Release ARCHS=arm64 ONLY_ACTIVE_ARCH=YES GCC_TREAT_WARNINGS_AS_ERRORS=NO \
+  GCC_PREPROCESSOR_DEFINITIONS='$(inherited) NO_AUTH=1' \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+  DEPLOYMENT_LOCATION=NO build
+```
+
+- Fix 1 (ad-hoc signing) and Fix 2 (`DEPLOYMENT_LOCATION=NO`) are needed here for the same reasons as
+  the plugin/standalone projects, so `scripts/run_tests_macos.sh` carries both.
+- Fix 3 (`JUCE_VST3_CAN_REPLACE_VST2=0`) is not needed: the console app has no VST3 wrapper. It is
+  also already set in `plugin/JuceLibraryCode/AppConfig.h` (Task 4).
+- The firebase-framework link fallback (`sed` on the tests `project.pbxproj`) was **not** needed:
+  `grep -c firebase tests/builds/osx/AudialSynthTests.xcodeproj/project.pbxproj` is 0, and with
+  `NO_AUTH=1` nothing references firebase.
+- Warnings only, same families as the plugin build (`MACOSX_DEPLOYMENT_TARGET` 10.12 below the
+  supported 10.13 floor, `-Wenum-enum-conversion` in `comb_filter.h`, `-Wnan-infinity-disabled` in
+  JUCE `juce_CharacterFunctions.h`). No source file needed editing.
+
+### Result
+
+`tests/builds/osx/build/Release/AudialSynthTests` runs every registered test, the OpenGL interface
+stress tests included, in about 3 minutes on this machine:
+
+```
+192 "Starting test:" lines, 192 "All tests completed successfully", 0 lines matching /fail/i
+EXIT CODE: 0
+```
+
+`tests/main.cpp` has no printed summary - `getResult()` reports failures only through the process
+exit status (0 = no failures, -1 = at least one). No pre-existing upstream test fails.

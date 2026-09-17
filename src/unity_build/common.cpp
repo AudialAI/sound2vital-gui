@@ -43,3 +43,4 @@
 #include "pitch_detector.cpp"
 #include "wave_warp_modifier.cpp"
 #include "slew_limit_modifier.cpp"
+#include "audial_client.cpp"

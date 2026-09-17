@@ -35,3 +35,4 @@
 #include "interface/sample_section_test.cpp"
 #include "interface/voice_section_test.cpp"
 
+#include "common/audial_client_test.cpp"
