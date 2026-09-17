@@ -416,3 +416,103 @@ changes behaviour.
    with `FileChooser::launchAsync(...)` on a `std::unique_ptr<FileChooser> chooser_` member, reset in
    the destructor (destroying the chooser aborts a pending dialog). The 194-test suite then completes
    in about 3 minutes.
+
+## 2026-09-17 - DSP fix
+
+### DSP fix - 64-sample engine blocks to match Vital 1.6.4
+
+One line, `src/synthesis/framework/common.h`:
+
+```diff
+--- a/src/synthesis/framework/common.h
++++ b/src/synthesis/framework/common.h
+@@ -47,7 +47,7 @@ namespace vital {
+   constexpr mono_float kPi = 3.1415926535897932384626433832795f;
+   constexpr mono_float kSqrt2 = 1.414213562373095048801688724209698f;
+   constexpr mono_float kEpsilon = 1e-16f;
+-  constexpr int kMaxBufferSize = 128;
++  constexpr int kMaxBufferSize = 64; // Audial Synth: 64 matches Vital 1.6.4's engine block; 1.0.6 shipped 128, which quantises block-rate modulation differently (see docs/parity.md).
+   constexpr int kMaxOversample = 8;
+   constexpr int kDefaultSampleRate = 44100;
+   constexpr mono_float kMinNyquistMult = 0.45351473923f;
+```
+
+Nothing else changed. It rebuilds clean with `scripts/build_macos.sh Release AudialSynth`
+(three `** BUILD SUCCEEDED **`, same warning families as the 2026-09-16 baseline).
+
+#### Mechanism
+
+`kMaxBufferSize` is the engine's processing chunk: each processor sees
+`min(host_block, kMaxBufferSize)` samples per call, and control-rate inputs are read **once
+per chunk**. Upstream Vital 1.0.6 uses 128; the proprietary 1.6.4 the presets were qualified
+against uses 64.
+
+That normally does not matter, because almost every block-rate value is smoothed or
+interpolated across the chunk. The wavetable frame is the exception:
+`SynthOscillator::setFourierWaveBuffers()` reads it once per chunk
+
+```cpp
+poly_float wave_frame = input(kWaveFrame)->at(0);   // synth_oscillator.cpp:808
+```
+
+and then truncates it to an integer frame index
+(`utils::toInt(utils::clamp(wave_frame, 0.0f, kNumOscillatorWaveFrames - 1))`,
+`synth_oscillator.cpp:849`). That truncation is a hard quantiser. Reading the same moving
+signal 128 samples earlier instead of 64 shifts the sampled value by up to half a frame, and
+whenever an integer boundary falls between the two read points the two builds load a
+**different wavetable buffer** for that fade window. Each such mismatch corrupts exactly two
+308-sample wavetable-fade windows (`kWavetableFadeTime * getSampleRate()`,
+`synth_oscillator.cpp:47` and `:1398`), and the filters, compressor and meta-modulation
+downstream turn that into whole-render divergence.
+
+So the defect only appears when a modulation is routed to `osc_N_wave_frame` **and** the
+frame is actually moving, which is exactly the corpus's bad family.
+
+#### Probe evidence
+
+Probe (`qualification/probe_wave_frame.py`, git-ignored): osc 1 only, unison 1,
+`frame_spread 0`, no filters/compressor/FX, `oversampling 0`, 64-keyframe wavetable, one
+modulation `env_2 -> osc_1_wave_frame`, 0.6 s render, harness defaults (1024-sample host
+buffer - the fix is measured in the plugin, not worked around in the host).
+
+| case | onset [0:1100] before | onset [0:1100] after | steady [1100:end] |
+|---|---|---|---|
+| modulated (`modulation_1_amount = 1`) | **-28.76 dB** | **-52.60 dB** | -51.91 dB (unchanged) |
+| static control (`modulation_1_amount = 0`) | -51.95 dB | -51.95 dB | -51.93 dB |
+
+Supporting measurements that identified the block size rather than a note-on state bug:
+
+- With `env_2_delay` raised so the frame is **provably pinned** for the whole render, the
+  onset was already at the floor (-51.95 dB) at every modulation amount. There is no
+  voice-start transient - the divergence tracks frame *motion*.
+- On a slow frame ramp, all 16 divergence regions started exactly on a 308-sample fade
+  boundary and lasted exactly two windows (about 613 samples).
+- A **constant** modulated frame matched at the floor at every value across five integer
+  boundaries, so the value itself, rounding, and the crossfade shape are all identical.
+- Each build's render is bit-identical across every host buffer size at or above its own
+  block size and changes below it (1.6.4: invariant for >= 64; fork before the fix:
+  invariant for >= 128). Feeding the **unfixed** fork 64-sample host buffers already
+  reproduced the whole fix, which is what pinned the constant.
+
+#### Verification
+
+- `scripts/run_tests_macos.sh`: 195 tests started, 195 "All tests completed successfully",
+  0 failures, about 5 minutes. No stress test's timing changed materially. (Note: the
+  script's own `grep ... | head -20` truncates the console summary; the complete log is at
+  `/tmp/audial_tests.log`.)
+- Full parity, 207 presets, `qualification/parity/2026-09-17-block64`:
+  median **-33.49 -> -57.77 dB**, worst **+0.86 -> -41.64 dB**, below -40 dB
+  **83 -> 207 of 207**, largest regression across the corpus +0.01 dB. See `docs/parity.md`.
+
+#### CPU cost
+
+10 s of audio from `fe2d27b0302f7e42` (unison 16 on all three oscillators, filters, FX),
+median of 5 runs after warm-up, via `qualification/cpu_cost.py`:
+
+| build | s per rendered s | vs Vital 1.6.4 |
+|---|---|---|
+| fork, 128-sample blocks (before) | 0.0516 | 0.945x |
+| fork, 64-sample blocks (after) | 0.0537 | **0.990x** |
+| Vital 1.6.4 (reference) | 0.0543 | 1.0 |
+
+**+4.1 %** CPU versus the old build, and still marginally faster than 1.6.4 itself.

@@ -47,7 +47,7 @@ namespace vital {
   constexpr mono_float kPi = 3.1415926535897932384626433832795f;
   constexpr mono_float kSqrt2 = 1.414213562373095048801688724209698f;
   constexpr mono_float kEpsilon = 1e-16f;
-  constexpr int kMaxBufferSize = 128;
+  constexpr int kMaxBufferSize = 64; // Audial Synth: 64 matches Vital 1.6.4's engine block; 1.0.6 shipped 128, which quantises block-rate modulation differently (see docs/parity.md).
   constexpr int kMaxOversample = 8;
   constexpr int kDefaultSampleRate = 44100;
   constexpr mono_float kMinNyquistMult = 0.45351473923f;

@@ -1,5 +1,11 @@
 # Parity: Audial Synth (upstream 1.0.6 DSP) vs Vital 1.6.4
 
+> **Superseded by "Re-run after the DSP fix" below.** Everything from here to that
+> section describes the **pre-fix** run of 2026-09-17 and its unison hypothesis, which
+> later measurement **falsified**. It is kept because the numbers are the "before" half of
+> the before/after comparison. The fix is a one-line change to the engine block size; the
+> corpus now sits at a median of **-57.77 dB** with **207/207** presets below -40 dB.
+
 Run: `qualification/parity/2026-09-17` (`parity.json`)
 Presets: 207 qualified engine results, drawn from `editable_corpus_v1` and
 `editable_corpus_parallel_v1`..`v8` under
@@ -118,20 +124,116 @@ table above) is pending.
 spectrograms have not been viewed via `compare_visual.py`. This write-up is
 based solely on the numeric residuals and `compare_audio` fields above.
 
+## Re-run after the DSP fix
+
+Run: `qualification/parity/2026-09-17-block64` (`parity.json`), same 207 presets,
+same `--preset-list qualification/parity_presets.txt`, same raw residual metric.
+
+Median residual: **-57.77 dB**   Worst: **-41.64 dB**
+Below -40 dB: **207/207**   (was -33.49 dB / +0.86 dB / 83 of 207)
+
+### The fix
+
+One line, `src/synthesis/framework/common.h`:
+
+```diff
+-  constexpr int kMaxBufferSize = 128;
++  constexpr int kMaxBufferSize = 64; // Audial Synth: 64 matches Vital 1.6.4's engine block; ...
+```
+
+**Vital 1.6.4 runs its synthesis engine in 64-sample blocks; upstream 1.0.6 shipped 128.**
+`SynthOscillator` reads `wave_frame` once per engine block
+(`input(kWaveFrame)->at(0)`, `src/synthesis/producers/synth_oscillator.cpp:808`) and then
+**truncates it to an integer wavetable frame index**. That truncation is a hard quantiser:
+it turns the 64-vs-128-sample difference in *when* the moving frame value is sampled into a
+whole-frame difference in *which* wavetable buffer gets loaded, on roughly one in five
+wavetable-fade boundaries. Each mismatch corrupts exactly two 308-sample fade windows
+(`kWavetableFadeTime * fs`), and the resonant filters, compressor and meta-modulation
+downstream amplify it into whole-render divergence.
+
+Evidence, all in `.superpowers/sdd/2026-09-16-sound2vital-gui/dsp-fix-report.md`:
+
+- Every divergence region started exactly on a 308-sample fade boundary and lasted exactly
+  two windows.
+- A **constant** modulated frame matched at the floor at every value, including values
+  swept across five integer boundaries — so it is not the value, not rounding, and not
+  the fade shape (both builds ramp the crossfade over identical windows).
+- Feeding the **unmodified** fork 64-sample host buffers (which forces its engine to chunk
+  at 64) already reproduced the fix, and each build's output is bit-identical across every
+  host buffer at or above its own block size and changes below it: 1.6.4 is invariant for
+  >= 64, the fork was invariant for >= 128.
+
+The earlier unison hypothesis is **false**: with `random_phase = 0` the fork's detune ladder,
+per-voice gains, stereo assignment and start phases already matched 1.6.4 to five decimal
+places. `unison_voices = 16` merely co-varied with an `lfo -> osc_N_wave_frame` route in the
+corpus template that produced the bad family.
+
+### Per-family before/after
+
+By unison family (the split this document previously used):
+
+| family | n | median before | median after | worst before | worst after |
+|---|---|---|---|---|---|
+| unison 1 / detune 4.472 / spread 1.0 | 147 | -41.58 | **-57.92** | -6.78 | **-41.64** |
+| unison 16 / detune 5.0 / spread 0.0 | 29 | -1.31 | **-52.09** | +0.86 | **-51.94** |
+| mixed | 31 | -12.54 | **-57.35** | -2.25 | **-49.85** |
+
+By the split that actually explains the defect:
+
+| family | n | median before | median after | worst before | worst after |
+|---|---|---|---|---|---|
+| a modulation routed to `osc_N_wave_frame` | 131 | -22.95 | **-57.57** | +0.86 | **-41.64** |
+| no `wave_frame` modulation | 76 | -50.38 | **-57.97** | -6.78 | **-46.47** |
+
+No preset regresses: the largest change in the wrong direction across all 207 is **+0.01 dB**,
+which is run-to-run noise. Acceptance gates (29 bad-family presets below -30 dB; 30 sampled
+good-family presets no more than 1 dB worse) both pass: bad family 29/29, worst -51.94 dB;
+good family max regression **0.00 dB**.
+
+### The -52 to -58 dB floor is a scalar gain difference, and is accepted
+
+Every "matching" preset now sits at -52 to -58 dB, and that floor is **not** waveform
+divergence: fitting a single scalar `g` minimising `||ref - g*fork||` drops the residual to
+about **-75 dB**. The fork is **0.12 % to 0.25 % louder** (+0.011 to +0.022 dB), the amount
+depends on `stereo_spread` (0.124 % at spread 1.0, 0.251 % at spread 0.0), the per-100 ms
+residual is flat across the whole render, both channels share the same `g`, and the best lag
+is 0. It is a static gain scaling, not drift, a filter or a delay — most likely in
+`SynthOscillator::stereoBlend()` / `setAmplitude()`'s
+`futils::equalPowerFade(stereo_spread * 0.5f + 0.5f)` and the
+`center_amplitude_` / `detuned_amplitude_` normalisation.
+
+**This floor is accepted.** It is inaudible (a fifth of a percent of level, constant), it is
+a separate defect from the block-size fix, and no parity target below -60 dB is reachable
+until it is explained. Qualification should be pinned against a -40 dB threshold, not -60 dB.
+
+### CPU cost
+
+10 s of audio from `fe2d27b0302f7e42` (unison 16 on all three oscillators, filters, FX),
+median of 5 runs after warm-up, seconds of wall clock per second of rendered audio:
+
+| build | s per rendered s | vs Vital 1.6.4 |
+|---|---|---|
+| fork, 128-sample blocks (before) | 0.0516 | 0.945x |
+| fork, 64-sample blocks (after) | 0.0537 | **0.990x** |
+| Vital 1.6.4 (reference, already 64) | 0.0543 | 1.0 |
+
+The fix costs **+4.1 %** CPU on this preset and still renders marginally faster than 1.6.4
+itself, which is the expected price of halving the block size and is well inside the
+few-percent budget.
+
+### Verification
+
+- `scripts/run_tests_macos.sh`: 195 tests started, 195 "All tests completed successfully",
+  0 failures, about 5 minutes (unchanged from the ~3-6 minute pre-fix baseline; no stress
+  test's timing changed materially).
+- Probe (`qualification/probe_wave_frame.py`, harness defaults, no 64-sample host buffer):
+  modulated onset [0:1100] **-28.76 dB -> -52.60 dB**, steady state unchanged at -51.91 dB,
+  unmodulated control unchanged at -51.95 dB.
+
 ## Decision
 
-**Investigate before pinning `PLUGIN_COMMIT`** — 29/207 presets (14%) have
-residual above -6 dB, and the bad tail is concentrated cleanly in presets
-using high oscillator unison voice counts (>=9, and specifically 16 for the
-worst 10). This is not a rounding-error-scale gap: a 0 dB residual means the
-fork and the reference disagree by as much as the signal itself. Given the
-clean split by unison voice count and the fact that gain correction does not
-close the gap, the likely fix is in the fork's oscillator unison/supersaw
-voice implementation (detune curve, per-voice phase seeding, or stereo
-spread), not a global level or filter issue. The 147 presets with low/no
-unison stacking already look like a clean pass (median -41.6 dB, worst
--6.8 dB) and do not block anything on their own.
-
-The controller makes the final decision on whether to proceed, fix the
-unison/supersaw path first, or narrow the corpus used for qualification to
-exclude heavy-unison presets in the interim.
+**Cleared for pinning `PLUGIN_COMMIT`.** All 207 qualification presets are below -40 dB
+(median -57.77 dB, worst -41.64 dB), the whole corpus is at the scalar-gain floor described
+above, the unit tests pass unchanged, and the fix costs about 4 % CPU. The remaining
+-52 to -58 dB floor is a known, accepted 0.12-0.25 % level difference and should be tracked
+separately if the parity target is ever tightened below -60 dB.
