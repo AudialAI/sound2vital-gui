@@ -33,3 +33,13 @@ build
 Debug
 Profile
 Release
+plugin/builds/osx/build/
+plugin/builds/linux_vst/build/
+standalone/builds/osx/build/
+standalone/builds/linux/build/
+tests/builds/osx/build/
+tests/builds/linux/build/
+docker/out/
+qualification/
+*.xcuserdatad/
+.DS_Store
