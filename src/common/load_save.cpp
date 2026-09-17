@@ -1028,9 +1028,13 @@ bool LoadSave::jsonToState(SynthBase* synth, std::map<std::string, String>& save
   std::string version = data["synth_version"];
   
   int compare_feature_versions = compareFeatureVersionStrings(version, ProjectInfo::versionString);
-  if (compare_feature_versions > 0)
-    return false;
-  
+  if (compare_feature_versions > 0) {
+    // Audial Synth: presets from the sound2vital engine may carry a newer version
+    // string. loadControls() ignores controls this build lacks, so load anyway.
+    writeErrorLog("Loading preset saved by newer synth version " + version +
+                  " into " + ProjectInfo::versionString + "; unknown controls ignored");
+  }
+
   int compare_versions = compareVersionStrings(version, ProjectInfo::versionString);
   if (compare_versions < 0 || data["settings"].count("sub_octave"))
     data = updateFromOldVersion(data);
