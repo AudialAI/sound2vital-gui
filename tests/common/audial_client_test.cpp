@@ -22,6 +22,11 @@ class AudialClientTest : public UnitTest {
       expectEquals(AudialClient::parseUrl("not json"), String());
       expectEquals(AudialClient::parseUrl("{\"other\":1}"), String());
 
+      beginTest("parse exe id");
+      expectEquals(AudialClient::parseExeId("{\"exeId\":\"e1\",\"state\":\"created\"}"), String("e1"));
+      expectEquals(AudialClient::parseExeId("{\"state\":\"created\"}"), String());
+      expectEquals(AudialClient::parseExeId("<html>"), String());
+
       beginTest("parse execution");
       AudialClient::ExecutionStatus done = AudialClient::parseExecution(
           "{\"state\":\"completed\",\"preset\":{\"presetvital\":{\"filename\":\"preset.vital\",\"url\":\"https://cdn/p\"}}}");

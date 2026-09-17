@@ -25,7 +25,11 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     class Job : public Thread {
       public:
         Job(ResynthSection* section) : Thread("Audial Resynth Job"), section_(section) { }
-        void run() override { section_->runJob(); }
+        void run() override {
+          section_->runJob();
+          if (threadShouldExit())
+            section_->postState(State::kIdle, "Cancelled");
+        }
       private:
         ResynthSection* section_;
     };
@@ -49,6 +53,7 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     Rectangle<int> getPanelRect();
     Rectangle<int> getDropRect();
     void browseForSample();
+    void releaseChooser();
     void setState(State state, const String& message);
     void postState(State state, const String& message);
     void loadPreset(const File& preset);

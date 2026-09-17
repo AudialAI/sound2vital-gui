@@ -650,6 +650,7 @@ void FullInterface::showAboutSection() {
 }
 
 void FullInterface::showResynthSection() {
+  ScopedLock lock(open_gl_critical_section_);
   resynth_section_->setVisible(true);
 }
 

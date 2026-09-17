@@ -42,6 +42,7 @@ class AudialClient {
     static String sanitizeFilename(const String& name);
     static String buildRunBody(const String& user_id, const String& filename, const String& file_url);
     static String parseUrl(const String& body);
+    static String parseExeId(const String& body);
     static ExecutionStatus parseExecution(const String& body);
 
     HttpResult uploadReference(const File& file, const String& exe_id, const String& filename);

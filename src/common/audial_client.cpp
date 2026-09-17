@@ -35,6 +35,13 @@ String AudialClient::parseUrl(const String& body) {
   return String(parsed["url"].get<std::string>());
 }
 
+String AudialClient::parseExeId(const String& body) {
+  json parsed = json::parse(body.toStdString(), nullptr, false);
+  if (parsed.is_discarded() || !parsed.is_object() || !parsed.count("exeId") || !parsed["exeId"].is_string())
+    return "";
+  return String(parsed["exeId"].get<std::string>());
+}
+
 AudialClient::ExecutionStatus AudialClient::parseExecution(const String& body) {
   ExecutionStatus status;
   json parsed = json::parse(body.toStdString(), nullptr, false);

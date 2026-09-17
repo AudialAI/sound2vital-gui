@@ -66,7 +66,10 @@ ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRou
 
 ResynthSection::~ResynthSection() {
   chooser_.reset();
-  job_.stopThread(1000);
+  // A window closed mid-transfer must wait out AudialClient's socket timeout rather than
+  // force-kill the thread while it is blocked in createInputStream(); a cancellable
+  // InputStream (so this can shrink back down) is a follow-up.
+  job_.stopThread(AudialClient::kTimeoutMs + 2000);
 }
 
 Rectangle<int> ResynthSection::getPanelRect() {
@@ -141,9 +144,12 @@ void ResynthSection::setVisible(bool should_be_visible) {
   Overlay::setVisible(should_be_visible);
   if (should_be_visible) {
     AudialCredentials credentials = LoadSave::loadAudialCredentials();
-    base_url_->setText(credentials.base_url);
-    user_id_->setText(credentials.user_id);
-    api_key_->setText(credentials.api_key);
+    if (base_url_->getText().isEmpty())
+      base_url_->setText(credentials.base_url);
+    if (user_id_->getText().isEmpty())
+      user_id_->setText(credentials.user_id);
+    if (api_key_->getText().isEmpty())
+      api_key_->setText(credentials.api_key);
     if (state_ == State::kDone || state_ == State::kError)
       setState(State::kIdle, "");
     Image image(Image::ARGB, 1, 1, false);
@@ -186,6 +192,8 @@ void ResynthSection::filesDropped(const StringArray& files, int x, int y) {
 }
 
 void ResynthSection::browseForSample() {
+  if (chooser_ != nullptr)
+    return;
   chooser_ = std::make_unique<FileChooser>("Choose a sample", File(), format_manager_.getWildcardForAllFormats());
   Component::SafePointer<ResynthSection> safe(this);
   chooser_->launchAsync(FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles,
@@ -195,7 +203,15 @@ void ResynthSection::browseForSample() {
                           File result = chooser.getResult();
                           if (result.existsAsFile())
                             safe.getComponent()->startJob(result);
+                          MessageManager::callAsync([safe] {
+                            if (safe != nullptr)
+                              safe.getComponent()->releaseChooser();
+                          });
                         });
+}
+
+void ResynthSection::releaseChooser() {
+  chooser_.reset();
 }
 
 void ResynthSection::saveCredentialsFromFields() {
@@ -244,9 +260,13 @@ void ResynthSection::startJob(const File& sample) {
 }
 
 void ResynthSection::cancelJob() {
+  // Non-blocking: runJob() is usually parked in AudialClient's blocking network call
+  // (up to AudialClient::kTimeoutMs), so stopThread() here would freeze the UI and then
+  // pthread_cancel a thread on a live socket. Signal + wake it and let Job::run() report
+  // "Cancelled" itself once runJob() actually returns.
   job_.signalThreadShouldExit();
-  job_.stopThread(3000);
-  setState(State::kIdle, "Cancelled");
+  job_.notify();
+  setState(State::kIdle, "Cancelling...");
 }
 
 void ResynthSection::setState(State state, const String& message) {
@@ -291,12 +311,11 @@ void ResynthSection::runJob() {
     postState(State::kError, "Run failed: " + run.describe());
     return;
   }
-  json parsed = json::parse(run.body.toStdString(), nullptr, false);
-  if (parsed.is_discarded() || !parsed.count("exeId") || !parsed["exeId"].is_string()) {
+  String job_exe_id = AudialClient::parseExeId(run.body);
+  if (job_exe_id.isEmpty()) {
     postState(State::kError, "Run returned no execution id");
     return;
   }
-  String job_exe_id = String(parsed["exeId"].get<std::string>());
 
   uint32 started = Time::getMillisecondCounter();
   AudialClient::ExecutionStatus status;
