@@ -144,7 +144,7 @@ void UpdateCheckSection::finished(URL::DownloadTask* task, bool success) {
 
 void UpdateCheckSection::checkUpdate() {
   URL version_url("");
-  version_file_ = File::getSpecialLocation(File::tempDirectory).getChildFile("vital_versions.txt");
+  version_file_ = File::getSpecialLocation(File::tempDirectory).getChildFile("audialsynth_versions.txt");
   download_task_ = version_url.downloadToFile(version_file_, "", this);
 }
 

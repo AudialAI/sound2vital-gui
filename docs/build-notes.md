@@ -165,8 +165,14 @@ equivalent edit was made by hand.
   `plugin/builds/linux_lv2/Makefile.binary` also carried `Vial.so` / `Vial.a` targets.
 - The `.jucer` sed order matters: `pluginName="Vial"` contains `name="Vial"`, so the plugin-specific
   keys must be replaced before the bare `name=` ones. Also renamed in the jucers, beyond the brief:
-  every `targetName=`, `companyCopyright`, the `tytel.org` NSAppTransportSecurity exception domain
-  (now `audialmusic.ai`, also in the generated osx plists), and the JACK/ALSA client-name defines.
+  most `targetName=` attributes, `companyCopyright`, the `tytel.org` NSAppTransportSecurity exception
+  domain (now `audialmusic.ai`, also in the generated osx plists), and the JACK/ALSA client-name
+  defines. The original pass missed the lowercase `LINUX_MAKE` `<CONFIGURATION>` `targetName=`
+  attributes in `headless/vital.jucer`, `standalone/vital.jucer` and `tests/vital.jucer`
+  (`targetName="vital"`, `targetName="vial"`, `targetName="vital_tests"`); those were fixed in Task 3
+  fix round 1 to `targetName="audialsynth"` / `targetName="audialsynth_tests"`, matching the
+  `JUCE_TARGET_APP` / `JUCE_TARGET_CONSOLEAPP` values already used by the hand-maintained Linux
+  Makefiles.
 - Extra source strings the brief's list missed but its own grep flags:
   `download_section.cpp` install folder `"Vial"`, `full_interface.cpp` OpenGL warning `"Vial
   requires OpenGL version: "`, plus (found by a wider grep) `load_save.cpp`
