@@ -38,25 +38,25 @@
  #define JucePlugin_Enable_IAA             1
 #endif
 #ifndef  JucePlugin_Name
- #define JucePlugin_Name                   "Vial"
+ #define JucePlugin_Name                   "Audial Synth"
 #endif
 #ifndef  JucePlugin_Desc
- #define JucePlugin_Desc                   ""
+ #define JucePlugin_Desc                   "Audial Synth"
 #endif
 #ifndef  JucePlugin_Manufacturer
- #define JucePlugin_Manufacturer           "Vial Audio"
+ #define JucePlugin_Manufacturer           "Audial"
 #endif
 #ifndef  JucePlugin_ManufacturerWebsite
- #define JucePlugin_ManufacturerWebsite    "vial.audio"
+ #define JucePlugin_ManufacturerWebsite    "https://audialmusic.ai"
 #endif
 #ifndef  JucePlugin_ManufacturerEmail
- #define JucePlugin_ManufacturerEmail      "matthewtytel@gmail.com"
+ #define JucePlugin_ManufacturerEmail      "support@audialmusic.ai"
 #endif
 #ifndef  JucePlugin_ManufacturerCode
- #define JucePlugin_ManufacturerCode       0x4f70656e
+ #define JucePlugin_ManufacturerCode       0x41756469
 #endif
 #ifndef  JucePlugin_PluginCode
- #define JucePlugin_PluginCode             0x5669616c
+ #define JucePlugin_PluginCode             0x41755379
 #endif
 #ifndef  JucePlugin_IsSynth
  #define JucePlugin_IsSynth                1
@@ -98,16 +98,16 @@
  #define JucePlugin_AUSubType              JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_AUExportPrefix
- #define JucePlugin_AUExportPrefix         vial
+ #define JucePlugin_AUExportPrefix         AudialSynthAU
 #endif
 #ifndef  JucePlugin_AUExportPrefixQuoted
- #define JucePlugin_AUExportPrefixQuoted   "vial"
+ #define JucePlugin_AUExportPrefixQuoted   "AudialSynthAU"
 #endif
 #ifndef  JucePlugin_AUManufacturerCode
  #define JucePlugin_AUManufacturerCode     JucePlugin_ManufacturerCode
 #endif
 #ifndef  JucePlugin_CFBundleIdentifier
- #define JucePlugin_CFBundleIdentifier     audio.vial.synth
+ #define JucePlugin_CFBundleIdentifier     ai.audialmusic.synth
 #endif
 #ifndef  JucePlugin_RTASCategory
  #define JucePlugin_RTASCategory           0
@@ -125,7 +125,7 @@
  #define JucePlugin_RTASDisableMultiMono   0
 #endif
 #ifndef  JucePlugin_AAXIdentifier
- #define JucePlugin_AAXIdentifier          audio.vial.synth
+ #define JucePlugin_AAXIdentifier          ai.audialmusic.synth
 #endif
 #ifndef  JucePlugin_AAXManufacturerCode
  #define JucePlugin_AAXManufacturerCode    JucePlugin_ManufacturerCode
@@ -149,7 +149,7 @@
  #define JucePlugin_IAASubType             JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_IAAName
- #define JucePlugin_IAAName                "Vial Audio: Vial"
+ #define JucePlugin_IAAName                "Audial: Audial Synth"
 #endif
 #ifndef  JucePlugin_VSTNumMidiInputs
  #define JucePlugin_VSTNumMidiInputs       16

@@ -8,11 +8,11 @@
     <key>CFBundleIconFile</key>
     <string></string>
     <key>CFBundleIdentifier</key>
-    <string>org.tytel.vital</string>
+    <string>ai.audialmusic.synth.headless</string>
     <key>CFBundleName</key>
-    <string>Vital</string>
+    <string>Audial Synth</string>
     <key>CFBundleDisplayName</key>
-    <string>Vital</string>
+    <string>Audial Synth</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -22,7 +22,7 @@
     <key>CFBundleVersion</key>
     <string>99999.9.9</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Matt Tytel</string>
+    <string>Audial</string>
     <key>NSHighResolutionCapable</key>
     <true/>
   </dict>

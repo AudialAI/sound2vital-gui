@@ -136,3 +136,70 @@ Observed: the process started, stayed alive for ~10 s, wrote nothing to stdout/s
 only when killed. Combined with the string checks above, no login / "work offline" prompt can be
 shown. The on-screen keyboard and About panel were not clicked - that still needs a human with a
 display.
+
+## Task 3 - rename to Audial Synth (brief sed adaptations)
+
+The rename seds in the task brief are recorded here where the tree's actual text differed and an
+equivalent edit was made by hand.
+
+- `PRODUCT_NAME = Vial\b` / `PRODUCT_NAME = Vital\b` never matched: BSD `sed` has no `\b`, and the
+  pbxproj lines are quoted (`PRODUCT_NAME = "Vial";`). Replaced `PRODUCT_NAME = "Vial"` /
+  `"Vital"` / `"VitalTests"` literally instead.
+- The pbxproj files carry more shipped names than the brief's list: product paths (`Vial.vst`,
+  `Vial.vst3`, `Vial.component`, `Vial.appex`, `Vial.app`, `Vital.app`), the shared static library
+  (`libVial.a`, `-lVial`), `name = Vial;` / `name = Vital;`, `ORGANIZATIONNAME`, and the AU
+  post-build `auval -v aumu Vita Tyte` on `Components/Vital.component`. All renamed, otherwise the
+  Step 2 grep does not come back clean and the AU post-build step validates the wrong component.
+- `s/Vial/Audial Synth/g` over the Info plists would have corrupted the AudioComponents block: the
+  AU `subtype` must stay a four-character code and the `factoryFunction` must match
+  `JucePlugin_AUExportPrefix`. Set explicitly instead: `manufacturer` `Open` -> `Audi`, `subtype`
+  `Vial` -> `AuSy`, `factoryFunction` `vialFactory` -> `AudialSynthAUFactory` (and
+  `vialFactoryAUv3` -> `AudialSynthAUFactoryAUv3`). `auval -v aumu AuSy Audi` fails without this.
+- Bundle identifiers the brief's sed did not cover: `audio.vital.standalone` ->
+  `ai.audialmusic.synth.standalone`, `audio.vital.tests` -> `ai.audialmusic.synth.tests`,
+  `org.tytel.vital` (headless) -> `ai.audialmusic.synth.headless`.
+- `JucePlugin_LV2URI` is not in `plugin/JuceLibraryCode/JucePluginDefines.h`; it is a `-D` flag in
+  `plugin/builds/linux_lv2/Makefile.binary`. Set there to `https://audialmusic.ai/synth`.
+- `standalone/builds/linux/Makefile` has `JUCE_TARGET_APP := vial`, not `vital`; `tests` has
+  `JUCE_TARGET_CONSOLEAPP := vital_tests`. Both renamed (`audialsynth`, `audialsynth_tests`).
+  `plugin/builds/linux_lv2/Makefile.binary` also carried `Vial.so` / `Vial.a` targets.
+- The `.jucer` sed order matters: `pluginName="Vial"` contains `name="Vial"`, so the plugin-specific
+  keys must be replaced before the bare `name=` ones. Also renamed in the jucers, beyond the brief:
+  every `targetName=`, `companyCopyright`, the `tytel.org` NSAppTransportSecurity exception domain
+  (now `audialmusic.ai`, also in the generated osx plists), and the JACK/ALSA client-name defines.
+- Extra source strings the brief's list missed but its own grep flags:
+  `download_section.cpp` install folder `"Vial"`, `full_interface.cpp` OpenGL warning `"Vial
+  requires OpenGL version: "`, plus (found by a wider grep) `load_save.cpp`
+  `kLinuxUserDataDirectory` / `XDG_DATA_HOME` child `vital`, the `"Vial Auth Init Thread"` name in
+  `authentication_section.h`, and `handleVitalCrash` in `src/standalone/main.cpp`.
+- The brief's Step 3 grep lists a root `*.jucer`; there is no `.jucer` at the repo root, so only
+  `*/vital.jucer` was grepped.
+
+### Deliberately left alone
+
+- `.vital` / `.vitalbank` / `.vitaltable` / `.vitalskin` file extensions and the `clm ` wavetable
+  marker: file-format identifiers, not brand names; renaming them breaks existing preset files.
+- `icons/vital_*.svg`, `images/vital*.png|xpm` source file names. The Linux `make install` copies
+  them out under `$(PROGRAM)` (now `audialsynth.png` / `audialsynth.xpm`), so nothing ships as
+  "vital"; only the in-repo source names remain.
+- `plugin|standalone|headless|tests/vital.jucer` file names (the brief says these stay).
+- `plugin/builds/{vs17,vs19,iOS}` and `standalone|tests/builds/vs*`: Windows and iOS exporters that
+  no task builds. They still carry `Vial`/`Vital` names and will need the same rename before any
+  Windows or iOS build is shipped.
+- `headless/builds/osx/Vital.entitlements`: orphaned, referenced by nothing.
+
+### Task 3 verification
+
+```
+scripts/build_macos.sh Release AudialSynth   -> ** BUILD SUCCEEDED **, products:
+  plugin/builds/osx/build/Release/{AudialSynth.component,AudialSynth.vst3,libAudialSynth.a}
+  standalone/builds/osx/build/Release/AudialSynth.app
+plutil VST3   CFBundleIdentifier ai.audialmusic.synth            CFBundleName "Audial Synth"
+plutil AU     manufacturer Audi  subtype AuSy  factoryFunction AudialSynthAUFactory
+plutil App    CFBundleIdentifier ai.audialmusic.synth.standalone CFBundleName "Audial Synth"
+standalone launched headlessly, stayed alive past 8 s, killed
+auval -v aumu AuSy Audi -> AU VALIDATION SUCCEEDED.
+```
+
+The header/about logo now draws the Audial wave mark (`Paths::vitalV()` parses the concatenated
+`d` data of `txt2vox_gui/vst3/Resources/brand/wave.svg`); this was not looked at on screen.

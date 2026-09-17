@@ -11,13 +11,13 @@ ttl_generator:
 	$(MAKE) -f Makefile.ttl_generator CONFIG=$(CONFIG)
 
 lv2: ttl_generator binary
-	./lv2_ttl_generator build/Vial.so
-	mkdir -p Vial.lv2
-	cp build/Vial.so Vial.lv2
-	mv *.ttl Vial.lv2
+	./lv2_ttl_generator build/AudialSynth.so
+	mkdir -p AudialSynth.lv2
+	cp build/AudialSynth.so AudialSynth.lv2
+	mv *.ttl AudialSynth.lv2
 
 clean:
 	$(MAKE) clean CONFIG=$(CONFIG) -f Makefile.binary
 	$(MAKE) clean CONFIG=$(CONFIG) -f Makefile.ttl_generator
 	rm -rf build
-	rm -rf Vial.lv2
+	rm -rf AudialSynth.lv2

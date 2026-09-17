@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Build the VST3 and AU (plugin project) and the standalone app (standalone project)
 # with authentication compiled out.
-# Usage: scripts/build_macos.sh [Debug|Release] [target-prefix]   (defaults: Release, Vial)
+# Usage: scripts/build_macos.sh [Debug|Release] [target-prefix]   (defaults: Release, AudialSynth)
 set -euo pipefail
 CONFIG="${1:-Release}"
-PREFIX="${2:-Vial}"
+PREFIX="${2:-AudialSynth}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Upstream signs with Vital Audio's Apple team ID; build locally with an ad-hoc
 # signature instead so no developer certificate is required.

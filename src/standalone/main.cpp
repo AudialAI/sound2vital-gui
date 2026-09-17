@@ -27,7 +27,7 @@
 #include "wavetable_3d.h"
 #endif
 
-void handleVitalCrash(void* data) {
+void handleAudialSynthCrash(void* data) {
   LoadSave::writeCrashLog(SystemStats::getStackBacktrace());
 }
 
@@ -100,7 +100,7 @@ class SynthApplication : public JUCEApplication {
             quit();
           }
 
-          SystemStats::setApplicationCrashHandler(handleVitalCrash);
+          SystemStats::setApplicationCrashHandler(handleAudialSynthCrash);
               
           if (visible) {
             setUsingNativeTitleBar(true);

@@ -27,9 +27,9 @@ else
 endif
 endif
 
-PROGRAM = vital
-LIB_PROGRAM = Vital
-LIB_PROGRAM_FX = VitalFX
+PROGRAM = audialsynth
+LIB_PROGRAM = AudialSynth
+LIB_PROGRAM_FX = AudialSynthFX
 BIN = $(DESTDIR)/usr/bin
 BINFILE = $(BIN)/$(PROGRAM)
 LV2 = $(DESTDIR)/$(LIBDIR)/lv2/$(LIB_PROGRAM).lv2
@@ -123,31 +123,31 @@ clean:
 install_standalone: standalone install_icons
 	install -d $(BIN) $(MAN) $(CHANGES) $(DESKTOP)
 	install standalone/builds/linux/build/$(PROGRAM) $(BIN)
-	install -m644 standalone/vital.desktop $(DESKTOP)/vital.desktop
+	install -m644 standalone/audialsynth.desktop $(DESKTOP)/audialsynth.desktop
 
 install_lv2: lv2
 	install -d $(LV2)
-	install -m644 plugin/builds/linux_lv2/Vital.lv2/* $(LV2)
+	install -m644 plugin/builds/linux_lv2/AudialSynth.lv2/* $(LV2)
 
 install_effects_lv2: effects_lv2
 	install -d $(EFFECTS_LV2)
-	install -m644 effects/builds/linux_lv2/VitalFX.lv2/* $(EFFECTS_LV2)
+	install -m644 effects/builds/linux_lv2/AudialSynthFX.lv2/* $(EFFECTS_LV2)
 
 install_vst: vst
 	install -d $(VSTDIR)
-	install plugin/builds/linux_vst/build/Vital.so $(VST)
+	install plugin/builds/linux_vst/build/AudialSynth.so $(VST)
 
 install_effects_vst: effects_vst
 	install -d $(VSTDIR)
-	install effects/builds/linux_vst/build/VitalFX.so $(EFFECTS_VST)
+	install effects/builds/linux_vst/build/AudialSynthFX.so $(EFFECTS_VST)
 
 install_vst3: vst3
 	install -d $(VST3)/$(VST3SUBDIR)
-	install -m644 plugin/builds/linux_vst/build/Vital.vst3/$(VST3SUBDIR)/* $(VST3)/$(VST3SUBDIR)
+	install -m644 plugin/builds/linux_vst/build/AudialSynth.vst3/$(VST3SUBDIR)/* $(VST3)/$(VST3SUBDIR)
 
 install_effects_vst3: effects_vst3
 	install -d $(EFFECTS_VST3)/$(VST3SUBDIR)
-	install -m644 plugin/builds/linux_vst/build/VitalFX.vst3/$(VST3SUBDIR)/* $(EFFECTS_VST3)/$(VST3SUBDIR)
+	install -m644 plugin/builds/linux_vst/build/AudialSynthFX.vst3/$(VST3SUBDIR)/* $(EFFECTS_VST3)/$(VST3SUBDIR)
 
 install: install_standalone install_lv2 install_vst install_vst3
 install_effects: install_effects_lv2 install_effects_vst install_effects_vst3
@@ -185,9 +185,9 @@ dist:
 
 zip_binaries:
 	mkdir $(ZIP_FOLDER)
-	cp -r plugin/builds/linux_lv2/Vital.lv2 $(ZIP_FOLDER)
-	cp -r plugin/builds/linux_vst/build/Vital.so $(ZIP_FOLDER)
-	cp -r plugin/builds/linux_vst/build/Vital.vst3 $(ZIP_FOLDER)
+	cp -r plugin/builds/linux_lv2/AudialSynth.lv2 $(ZIP_FOLDER)
+	cp -r plugin/builds/linux_vst/build/AudialSynth.so $(ZIP_FOLDER)
+	cp -r plugin/builds/linux_vst/build/AudialSynth.vst3 $(ZIP_FOLDER)
 	cp -r standalone/builds/linux/build/$(PROGRAM) $(ZIP_FOLDER)
 	zip -r $(ZIP_FOLDER) $(ZIP_FOLDER)
 
