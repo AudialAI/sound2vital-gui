@@ -18,6 +18,7 @@
 
 #include "JuceHeader.h"
 #include "json/json.h"
+#include "audial_client.h"
 
 #include <map>
 #include <set>
@@ -132,6 +133,9 @@ class LoadSave {
     static void saveContentVersion(std::string version);
     static void saveUpdateCheckConfig(bool check_for_updates);
     static void saveWorkOffline(bool work_offline);
+    static void saveAudialCredentials(const std::string& base_url, const std::string& user_id,
+                                      const std::string& api_key);
+    static AudialCredentials loadAudialCredentials();
     static void saveLoadedSkin(const std::string& name);
     static void saveAnimateWidgets(bool animate_widgets);
     static void saveDisplayHzFrequency(bool display_hz);

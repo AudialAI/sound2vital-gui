@@ -1317,6 +1317,31 @@ void LoadSave::saveWorkOffline(bool work_offline) {
   saveJsonToConfig(data);
 }
 
+void LoadSave::saveAudialCredentials(const std::string& base_url, const std::string& user_id,
+                                     const std::string& api_key) {
+  json data = getConfigJson();
+  data["audial_base_url"] = base_url;
+  data["audial_user_id"] = user_id;
+  data["audial_api_key"] = api_key;
+  saveJsonToConfig(data);
+}
+
+AudialCredentials LoadSave::loadAudialCredentials() {
+  json data = getConfigJson();
+  AudialCredentials credentials;
+  credentials.base_url = "https://api.audialmusic.ai";
+  if (data.count("audial_base_url") && data["audial_base_url"].is_string()) {
+    std::string base_url = data["audial_base_url"];
+    if (!base_url.empty())
+      credentials.base_url = base_url;
+  }
+  if (data.count("audial_user_id") && data["audial_user_id"].is_string())
+    credentials.user_id = String(data["audial_user_id"].get<std::string>());
+  if (data.count("audial_api_key") && data["audial_api_key"].is_string())
+    credentials.api_key = String(data["audial_api_key"].get<std::string>());
+  return credentials;
+}
+
 void LoadSave::saveLoadedSkin(const std::string& name) {
   json data = getConfigJson();
   data["loaded_skin"] = name;

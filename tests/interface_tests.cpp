@@ -36,3 +36,4 @@
 #include "interface/voice_section_test.cpp"
 
 #include "common/audial_client_test.cpp"
+#include "common/load_save_credentials_test.cpp"
