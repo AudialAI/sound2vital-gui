@@ -61,6 +61,7 @@ class HeaderSection : public SynthSection, public SaveSection::Listener,
         virtual ~Listener() { }
 
         virtual void showAboutSection() = 0;
+        virtual void showResynthSection() = 0;
         virtual void deleteRequested(File preset) = 0;
         virtual void tabSelected(int index) = 0;
         virtual void clearTemporaryTab(int current_tab) = 0;
@@ -116,6 +117,7 @@ class HeaderSection : public SynthSection, public SaveSection::Listener,
     std::unique_ptr<PlainTextComponent> temporary_tab_;
     std::unique_ptr<OpenGlShapeButton> exit_temporary_button_;
 
+    std::unique_ptr<OpenGlToggleButton> resynth_button_;
     std::unique_ptr<SynthButton> view_spectrogram_;
     std::unique_ptr<Oscilloscope> oscilloscope_;
     std::unique_ptr<Spectrogram> spectrogram_;

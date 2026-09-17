@@ -187,6 +187,13 @@ HeaderSection::HeaderSection() : SynthSection("header_section"), tab_offset_(0) 
   addButton(view_spectrogram_.get());
   view_spectrogram_->getGlComponent()->setVisible(false);
 
+  resynth_button_ = std::make_unique<OpenGlToggleButton>("RESYNTH");
+  resynth_button_->setUiButton(true);
+  resynth_button_->setText("RESYNTH");
+  resynth_button_->addListener(this);
+  addAndMakeVisible(resynth_button_.get());
+  addOpenGlComponent(resynth_button_->getGlComponent());
+
   exit_temporary_button_ = std::make_unique<OpenGlShapeButton>("Exit");
   addChildComponent(exit_temporary_button_.get());
   addOpenGlComponent(exit_temporary_button_->getGlComponent());
@@ -257,7 +264,11 @@ void HeaderSection::resized() {
   view_spectrogram_->setBounds(oscilloscope_->getBounds());
   spectrogram_->setBounds(oscilloscope_->getBounds());
 
-  int tabs_width = preset_selector_x - component_padding - tab_offset_;
+  int resynth_width = height * 2.4f;
+  int resynth_height = height * 0.6f;
+  resynth_button_->setBounds(preset_selector_x - component_padding - resynth_width,
+                             (height - resynth_height) / 2, resynth_width, resynth_height);
+  int tabs_width = resynth_button_->getX() - component_padding - tab_offset_;
   tab_selector_->setBounds(tab_offset_, 0, tabs_width, height);
   exit_temporary_button_->setBounds(tab_offset_, 0, height, height);
 
@@ -284,6 +295,13 @@ void HeaderSection::setAllValues(vital::control_map& controls) {
 }
 
 void HeaderSection::buttonClicked(Button* clicked_button) {
+  if (clicked_button == resynth_button_.get()) {
+    resynth_button_->setToggleState(false, dontSendNotification);
+    for (Listener* listener : listeners_)
+      listener->showResynthSection();
+    return;
+  }
+
   if (clicked_button == exit_temporary_button_.get()) {
     for (Listener* listener : listeners_)
       listener->clearTemporaryTab(tab_selector_->getValue());

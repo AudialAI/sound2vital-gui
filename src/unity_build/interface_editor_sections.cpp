@@ -32,3 +32,4 @@
 #include "phaser_section.cpp"
 #include "compressor_section.cpp"
 #include "reverb_section.cpp"
+#include "resynth_section.cpp"

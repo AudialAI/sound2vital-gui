@@ -44,6 +44,7 @@ class ModulationInterface;
 class ModulationManager;
 class PortamentoSection;
 class PresetBrowser;
+class ResynthSection;
 class SaveSection;
 class SynthesisInterface;
 struct SynthGuiData;
@@ -102,6 +103,7 @@ class FullInterface : public SynthSection, public AuthenticationSection::Listene
     void openGLContextClosing() override;
 
     void showAboutSection() override;
+    void showResynthSection() override;
     void deleteRequested(File preset) override;
     void tabSelected(int index) override;
     void clearTemporaryTab(int current_tab) override;
@@ -177,6 +179,7 @@ class FullInterface : public SynthSection, public AuthenticationSection::Listene
     std::unique_ptr<AboutSection> about_section_;
     std::unique_ptr<AuthenticationSection> authentication_;
     std::unique_ptr<UpdateCheckSection> update_check_section_;
+    std::unique_ptr<ResynthSection> resynth_section_;
     std::unique_ptr<Component> standalone_settings_section_;
 
     std::unique_ptr<HeaderSection> header_;

@@ -38,6 +38,7 @@
 #include "overlay.h"
 #include "portamento_section.h"
 #include "preset_browser.h"
+#include "resynth_section.h"
 #include "synthesis_interface.h"
 #include "synth_gui_interface.h"
 #include "text_look_and_feel.h"
@@ -203,6 +204,11 @@ FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_inte
   addChildComponent(update_check_section_.get());
   update_check_section_->setAlwaysOnTop(true);
   update_check_section_->addListener(this);
+
+  resynth_section_ = std::make_unique<ResynthSection>("resynth");
+  addSubSection(resynth_section_.get(), false);
+  addChildComponent(resynth_section_.get());
+  resynth_section_->setAlwaysOnTop(true);
 
   if (LoadSave::isExpired()) { 
     expired_section_ = std::make_unique<ExpiredSection>("expired");
@@ -482,6 +488,7 @@ void FullInterface::resized() {
 
   about_section_->setBounds(bounds);
   update_check_section_->setBounds(bounds);
+  resynth_section_->setBounds(bounds);
   save_section_->setBounds(bounds);
   delete_section_->setBounds(bounds);
   download_section_->setBounds(bounds);
@@ -640,6 +647,10 @@ void FullInterface::openGLContextClosing() {
 void FullInterface::showAboutSection() {
   ScopedLock lock(open_gl_critical_section_);
   about_section_->setVisible(true);
+}
+
+void FullInterface::showResynthSection() {
+  resynth_section_->setVisible(true);
 }
 
 void FullInterface::deleteRequested(File preset) {

@@ -387,3 +387,32 @@ EXIT CODE: 0
 
 `tests/main.cpp` has no printed summary - `getResult()` reports failures only through the process
 exit status (0 = no failures, -1 = at least one). No pre-existing upstream test fails.
+
+### Task 8 - `ResynthSection` compile adaptations
+
+Two small changes to the task brief's code were needed to compile against JUCE 6.0.5. Neither
+changes behaviour.
+
+1. `Component::SafePointer::operator->` has a const overload that yields a `const ComponentType*`,
+   and a non-`mutable` lambda captures its copy of the pointer as const, so `safe->setState(...)`
+   and `safe->loadPreset(...)` inside the `MessageManager::callAsync` lambdas failed:
+
+   ```
+   src/interface/editor_sections/resynth_section.cpp:258:7: error: 'this' argument to member
+   function 'setState' has type 'const ResynthSection', but function is not marked const
+       safe->setState(state, message);
+   src/interface/editor_sections/resynth_section.cpp:333:7: error: 'this' argument to member
+   function 'loadPreset' has type 'const ResynthSection', but function is not marked const
+       safe->loadPreset(preset);
+   ```
+
+   Fixed by calling through `safe.getComponent()->...`, which returns a non-const pointer
+   (`getComponent()` is itself const). The same form is used in the `browseForSample()` callback.
+
+2. `browseForSample()` originally used the modal `FileChooser::browseForFileToOpen()`. That is not a
+   compile error, but it hangs the headless unit-test process: the "Full Interface / Stress Random
+   Controls" test toggles every showing `ToggleButton` with `sendNotification`, which opens the
+   RESYNTH overlay and then presses its Browse button, and the modal dialog never returns. Replaced
+   with `FileChooser::launchAsync(...)` on a `std::unique_ptr<FileChooser> chooser_` member, reset in
+   the destructor (destroying the chooser aborts a pending dialog). The 194-test suite then completes
+   in about 3 minutes.
