@@ -520,3 +520,38 @@ median of 5 runs after warm-up, via `qualification/cpu_cost.py`:
 | Vital 1.6.4 (reference) | 0.0543 | 1.0 |
 
 **+4.1 %** CPU versus the old build, and still marginally faster than 1.6.4 itself.
+
+## Task 11 - release build, packaging, and backend pin
+
+- Added `scripts/package_macos.sh` (rebuilds Release, zips `AudialSynth.app`,
+  `AudialSynth.vst3`, `AudialSynth.component`, `LICENSE`, and a `SOURCE.txt`
+  pointing at the exact commit) and `docs/distribution.md`. `dist/` is
+  ignored.
+- `dist/AudialSynth-macOS-70b5016.zip` (9.2 MB), `unzip -l` confirms all five
+  required entries: `AudialSynth.app/...`, `AudialSynth.vst3/...`,
+  `AudialSynth.component/...`, `LICENSE`, `SOURCE.txt`.
+- Re-ran `scripts/build_linux_vst3.sh` at this commit (the earlier Linux
+  build in Task 4 was at `3372082`, before the `a262b49` engine-block fix).
+  Both the `verify` and `artifact` Docker targets succeeded:
+
+  ```
+  #18 [verify 6/6] RUN python /verify_vst3.py ... || xvfb-run -a python /verify_vst3.py ...
+  #18 2.304 rendered shape=(2, 66150) peak=0.3618
+  AudialSynth.so
+  ```
+
+  Exported bundle: `docker/out/AudialSynth.vst3/Contents/x86_64-linux/AudialSynth.so`.
+
+### PLUGIN_COMMIT
+
+Tag `backend-v1` pins the render backend for the microservice
+(`sound2vital-runpod` `PLUGIN_COMMIT`). Its sha is recorded once the tag is
+created at the final commit of this task (see the report for the exact
+value): `git rev-parse backend-v1`.
+
+### Pending user approval
+
+No remote is configured and nothing was pushed. `docs/distribution.md`
+documents `git push -u origin main --tags` as the next step once the user
+confirms the GitHub URL used in `SOURCE.txt`
+(`https://github.com/zfarrell13/sound2vital-gui`).
