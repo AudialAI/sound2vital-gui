@@ -440,6 +440,10 @@ One line, `src/synthesis/framework/common.h`:
 Nothing else changed. It rebuilds clean with `scripts/build_macos.sh Release AudialSynth`
 (three `** BUILD SUCCEEDED **`, same warning families as the 2026-09-16 baseline).
 
+`src/common/synth_base.cpp` hardcodes a 64-sample block (`kBufferSize`) in its offline render
+and preview paths, which now agrees with `kMaxBufferSize` by value rather than by reference;
+keep them in sync if the constant ever changes.
+
 #### Mechanism
 
 `kMaxBufferSize` is the engine's processing chunk: each processor sees

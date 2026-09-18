@@ -168,6 +168,16 @@ per-voice gains, stereo assignment and start phases already matched 1.6.4 to fiv
 places. `unison_voices = 16` merely co-varied with an `lfo -> osc_N_wave_frame` route in the
 corpus template that produced the bad family.
 
+A separate hypothesis — a voice-start transient in `SynthOscillator` (informally "D1"),
+with three candidate patches to `src/synthesis/producers/synth_oscillator.cpp` targeting
+the `last_buffers_` copy in `reset()`, the ordering in `setWaveBuffers()`, and the
+`current_buffer_sample` rewind — was investigated in
+`.superpowers/sdd/2026-09-16-sound2vital-gui/spike-unison-report.md`. All three candidates
+were measured and falsified: with the wavetable frame pinned via `env_2_delay`, the note-on
+residual was already at the -52 dB floor at every modulation amount, so there was no
+voice-start transient to fix. The only change needed to close the parity gap was the engine
+block size above; none of the three `synth_oscillator.cpp` candidates were applied.
+
 ### Per-family before/after
 
 By unison family (the split this document previously used):
@@ -192,9 +202,12 @@ good family max regression **0.00 dB**.
 
 ### The -52 to -58 dB floor is a scalar gain difference, and is accepted
 
-Every "matching" preset now sits at -52 to -58 dB, and that floor is **not** waveform
-divergence: fitting a single scalar `g` minimising `||ref - g*fork||` drops the residual to
-about **-75 dB**. The fork is **0.12 % to 0.25 % louder** (+0.011 to +0.022 dB), the amount
+The ~155 presets in the -52 to -58 dB band are dominated by a static scalar gain difference
+of 0.12-0.25% (median best-fit residual about -70 dB, recovering roughly 12 dB); the -41 to
+-50 dB tail is not explained by gain (the worst preset, -41.64 dB, gain-fits to only
+-41.75 dB) and is accepted on magnitude alone. Within the band, the gain difference is
+**not** waveform divergence: fitting a single scalar `g` minimising `||ref - g*fork||` is
+what recovers the ~12 dB above. The fork is **0.12 % to 0.25 % louder** (+0.011 to +0.022 dB), the amount
 depends on `stereo_spread` (0.124 % at spread 1.0, 0.251 % at spread 0.0), the per-100 ms
 residual is flat across the whole render, both channels share the same `g`, and the best lag
 is 0. It is a static gain scaling, not drift, a filter or a delay — most likely in
