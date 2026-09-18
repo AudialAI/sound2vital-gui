@@ -555,12 +555,15 @@ Tag `backend-v1` pins the render backend for the microservice
 (`sound2vital-runpod` `PLUGIN_COMMIT`):
 
 ```
-backend-v1 = 16d43fe1c1ec768f4e72af065508019423ce9bda
-PLUGIN_COMMIT=16d43fe1c1ec768f4e72af065508019423ce9bda
+backend-v1 = cf2da9c822816af4fff1b2f48c825795b062d294
+PLUGIN_COMMIT=cf2da9c822816af4fff1b2f48c825795b062d294
 ```
 
-Always confirm with `git rev-parse backend-v1` before relying on the literal
-above.
+That is the last code commit of the final-review fix wave, which is what the
+render backend is built from. The tag itself was then moved once more onto the
+docs commit that records these literals, so `git rev-parse backend-v1` returns
+that docs commit; the two trees differ only in `docs/`. Always confirm with
+`git rev-parse backend-v1` before relying on the literal above.
 
 ### Pending user approval
 
