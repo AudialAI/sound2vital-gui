@@ -808,7 +808,7 @@
     <LINUX_MAKE targetFolder="builds/linux_vst" vst3Folder="../third_party/VST3_SDK"
                 extraCompilerFlags="-ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops -fvisibility=hidden -fvisibility-inlines-hidden "
                 extraLinkerFlags="-ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -fvisibility=hidden -fvisibility-inlines-hidden"
-                extraDefs="BUILD_DATE=$(BUILD_DATE)&#10;REQUIRE_AUTH=1&#10;_GLIBCXX_USE_CXX11_ABI=0&#10;JUCE_USE_XRANDR=0&#10;JUCE_OPENGL3=1&#10;JUCE_DSP_USE_SHARED_FFTW=1"
+                extraDefs="BUILD_DATE=$(BUILD_DATE)&#10;NO_AUTH=1&#10;_GLIBCXX_USE_CXX11_ABI=0&#10;JUCE_USE_XRANDR=0&#10;JUCE_OPENGL3=1&#10;JUCE_DSP_USE_SHARED_FFTW=1"
                 externalLibraries="firebase_auth&#10;firebase_app&#10;secret-1&#10;glib-2.0"
                 vstLegacyFolder="../third_party/VST_SDK/VST2_SDK">
       <CONFIGURATIONS>
@@ -837,13 +837,13 @@
       </MODULEPATHS>
     </LINUX_MAKE>
     <XCODE_MAC targetFolder="builds/osx" vst3Folder="../third_party/VST3_SDK"
-               rtasFolder="~/SDKs/PT_80_SDK" aaxFolder="~/srcs/AAX" extraDefs="JUCE_OPENGL3=1&#10;REQUIRE_AUTH=1"
+               rtasFolder="~/SDKs/PT_80_SDK" aaxFolder="~/srcs/AAX" extraDefs="JUCE_OPENGL3=1&#10;NO_AUTH=1"
                customPList="&lt;plist&gt;&#10;  &lt;dict&gt;&#10;    &lt;key&gt;NSAppTransportSecurity&lt;/key&gt;&#10;    &lt;dict&gt;&#10;      &lt;key&gt;NSExceptionDomains&lt;/key&gt;&#10;      &lt;dict&gt;&#10;        &lt;key&gt;audialmusic.ai&lt;/key&gt;&#10;        &lt;dict&gt;&#10;          &lt;key&gt;NSIncludeSubDomains&lt;/key&gt;&#10;          &lt;false/&gt;&#10;          &lt;key&gt;NSTemporaryExceptionAllowsInsecureHTTPLoads&lt;/key&gt;&#10;          &lt;true/&gt;&#10;          &lt;key&gt;NSTemporaryExceptionMinimumTLSVersion&lt;/key&gt;&#10;          &lt;string&gt;TLSv1.1&lt;/string&gt;&#10;        &lt;/dict&gt;&#10;      &lt;/dict&gt;&#10;    &lt;/dict&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                extraLinkerFlags="" bigIcon="XC7smo" postbuildCommand="if [ -f ~/Library/Audio/Plug-Ins/Components/AudialSynth.component ]; then&#10;  auval -v aumu AuSy Audi&#10;fi"
                hardenedRuntime="1" externalLibraries="gssapi_krb5" extraFrameworks="Security,GSS"
                frameworkSearchPaths="../../../third_party/firebase_cpp_sdk/frameworks/darwin/"
                extraCustomFrameworks="firebase.framework&#10;firebase_auth.framework"
-               iosDevelopmentTeamID="EFXDM6K3KJ" vstLegacyFolder="../third_party/VST_SDK/VST2_SDK"
+               iosDevelopmentTeamID="" vstLegacyFolder="../third_party/VST_SDK/VST2_SDK"
                xcodeValidArchs="arm64,arm64e,x86_64">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" osxCompatibility="10.12 SDK" osxArchitecture="64BitIntel"
@@ -897,7 +897,7 @@
       </MODULEPATHS>
     </XCODE_IPHONE>
     <VS2017 targetFolder="builds/vs17" vst3Folder="../third_party/VST3_SDK"
-            extraDefs="JUCE_OPENGL3=1&#10;REQUIRE_AUTH=1&#10;WINVER=0x0601&#10;_WIN32_WINNT=0x0601&#10;_ENABLE_EXTENDED_ALIGNED_STORAGE &#10;INTEL_IPP=1&#10;__SSE2__=1"
+            extraDefs="JUCE_OPENGL3=1&#10;NO_AUTH=1&#10;WINVER=0x0601&#10;_WIN32_WINNT=0x0601&#10;_ENABLE_EXTENDED_ALIGNED_STORAGE &#10;INTEL_IPP=1&#10;__SSE2__=1"
             IPPLibrary="Sequential" externalLibraries="firebase_auth.lib&#10;firebase_app.lib&#10;firebase_rest_lib.lib&#10;flatbuffers.lib&#10;libcurl.lib&#10;Wldap32.lib&#10;crypt32.lib"
             vstLegacyFolder="../third_party/VST_SDK/VST2_SDK">
       <CONFIGURATIONS>

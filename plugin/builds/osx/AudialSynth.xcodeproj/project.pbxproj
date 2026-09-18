@@ -4766,7 +4766,7 @@
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
 				DEPLOYMENT_LOCATION = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				DSTROOT = /;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
@@ -4777,7 +4777,7 @@
 					"_DEBUG=1",
 					"DEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -4873,7 +4873,7 @@
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
 				DEPLOYMENT_LOCATION = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				DSTROOT = /;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
@@ -4884,7 +4884,7 @@
 					"_NDEBUG=1",
 					"NDEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -4981,7 +4981,7 @@
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
 				DEPLOYMENT_LOCATION = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				DSTROOT = /;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
@@ -4992,7 +4992,7 @@
 					"_DEBUG=1",
 					"DEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5088,7 +5088,7 @@
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
 				DEPLOYMENT_LOCATION = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				DSTROOT = /;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
@@ -5099,7 +5099,7 @@
 					"_NDEBUG=1",
 					"NDEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5196,7 +5196,7 @@
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
 				DEPLOYMENT_LOCATION = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				DSTROOT = /;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
@@ -5207,7 +5207,7 @@
 					"_DEBUG=1",
 					"DEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5304,7 +5304,7 @@
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
 				DEPLOYMENT_LOCATION = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				DSTROOT = /;
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
@@ -5315,7 +5315,7 @@
 					"_NDEBUG=1",
 					"NDEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5412,7 +5412,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -5422,7 +5422,7 @@
 					"_DEBUG=1",
 					"DEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5513,7 +5513,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
 				GCC_FAST_MATH = YES;
@@ -5523,7 +5523,7 @@
 					"_NDEBUG=1",
 					"NDEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5615,7 +5615,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -5625,7 +5625,7 @@
 					"_DEBUG=1",
 					"DEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5716,7 +5716,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
 				GCC_FAST_MATH = YES;
@@ -5726,7 +5726,7 @@
 					"_NDEBUG=1",
 					"NDEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5818,7 +5818,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -5828,7 +5828,7 @@
 					"_DEBUG=1",
 					"DEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -5919,7 +5919,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)";
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = EFXDM6K3KJ;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = ("../../../third_party/firebase_cpp_sdk/frameworks/darwin/", "$(inherited)");
 				GCC_FAST_MATH = YES;
@@ -5929,7 +5929,7 @@
 					"_NDEBUG=1",
 					"NDEBUG=1",
 					"JUCE_OPENGL3=1",
-					"REQUIRE_AUTH=1",
+					"NO_AUTH=1",
 					"JUCER_XCODE_MAC_E4F0A9CA=1",
 					"JUCE_APP_VERSION=1.0.6",
 					"JUCE_APP_VERSION_HEX=0x10006",
@@ -6622,7 +6622,7 @@
 		1274150799E95CB43F035F74 = {
 			isa = PBXProject;
 			buildConfigurationList = BE49DC8D2B264DCFD2D03E8A;
-			attributes = { LastUpgradeCheck = 1200; ORGANIZATIONNAME = "Audial"; TargetAttributes = { DDA3E4C82DD636A6B1B37767 = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };04C62C3EDEE68AB6BB542024 = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };650B07A70E4EC6685842D802 = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };C2D01B9344ECB5A5F8D03D03 = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };5DD7392369A544599AE7F84E = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 1; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };F9F0DA819689524463BB1AEE = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };995510783F0DBDE21AB02443 = { DevelopmentTeam = EFXDM6K3KJ; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; }; }; };
+			attributes = { LastUpgradeCheck = 1200; ORGANIZATIONNAME = "Audial"; TargetAttributes = { DDA3E4C82DD636A6B1B37767 = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };04C62C3EDEE68AB6BB542024 = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };650B07A70E4EC6685842D802 = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };C2D01B9344ECB5A5F8D03D03 = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };5DD7392369A544599AE7F84E = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 1; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };F9F0DA819689524463BB1AEE = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; };995510783F0DBDE21AB02443 = { DevelopmentTeam = ""; ProvisioningStyle = Automatic; SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; com.apple.HardenedRuntime = { enabled = 1; }; }; }; }; };
 			compatibilityVersion = "Xcode 3.2";
 			hasScannedForEncodings = 0;
 			mainGroup = 98F1FCB5DC3DD869395E33CF;

@@ -16,9 +16,13 @@
 
 #pragma once
 
+// JuceHeader.h first: it pulls in AppConfig.h, which is where NO_AUTH is defined for every
+// exporter. Testing NO_AUTH before that include would silently fall back to a firebase build
+// for any translation unit that reaches this header first.
+#include "JuceHeader.h"
+
 #if NDEBUG && !NO_AUTH
 
-#include "JuceHeader.h"
 #include "load_save.h"
 
 #if defined(__APPLE__)

@@ -16,9 +16,10 @@
 
 #pragma once
 
-#if NDEBUG && !NO_AUTH
-
+// See authentication.h: JuceHeader.h (and so AppConfig.h) has to be seen before NO_AUTH is tested.
 #include "JuceHeader.h"
+
+#if NDEBUG && !NO_AUTH
 
 #include "authentication.h"
 #include "synth_button.h"

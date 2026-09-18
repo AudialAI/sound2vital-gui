@@ -1038,7 +1038,7 @@
   </MAINGROUP>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="builds/osx" customPList="&lt;plist&gt;&#10;  &lt;dict&gt;&#10;    &lt;key&gt;NSAppTransportSecurity&lt;/key&gt;&#10;    &lt;dict&gt;&#10;      &lt;key&gt;NSExceptionDomains&lt;/key&gt;&#10;      &lt;dict&gt;&#10;        &lt;key&gt;audialmusic.ai&lt;/key&gt;&#10;        &lt;dict&gt;&#10;          &lt;key&gt;NSIncludeSubDomains&lt;/key&gt;&#10;          &lt;false/&gt;&#10;          &lt;key&gt;NSTemporaryExceptionAllowsInsecureHTTPLoads&lt;/key&gt;&#10;          &lt;true/&gt;&#10;          &lt;key&gt;NSTemporaryExceptionMinimumTLSVersion&lt;/key&gt;&#10;          &lt;string&gt;TLSv1.1&lt;/string&gt;&#10;        &lt;/dict&gt;&#10;      &lt;/dict&gt;&#10;    &lt;/dict&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
-               extraLinkerFlags="" iosDevelopmentTeamID="EFXDM6K3KJ" smallIcon=""
+               extraLinkerFlags="" iosDevelopmentTeamID="" smallIcon=""
                bigIcon="PwV9iC" documentExtensions="vital,vitalbank" extraDefs="NO_TEXT_ENTRY=1&#10;NO_AUTH=1&#10;JUCE_OPENGL3=1"
                xcodeValidArchs="arm64,arm64e,x86_64">
       <CONFIGURATIONS>

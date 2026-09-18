@@ -148,6 +148,14 @@
  #define   JUCE_VST3_CAN_REPLACE_VST2 0
 #endif
 
+//==============================================================================
+// Audial Synth: authentication is compiled out of every build. Defined here so it
+// holds for any exporter, not only the ones that pass -DNO_AUTH=1 on the command line.
+
+#ifndef    NO_AUTH
+ #define   NO_AUTH 1
+#endif
+
 #ifndef    JUCE_FORCE_USE_LEGACY_PARAM_IDS
  //#define JUCE_FORCE_USE_LEGACY_PARAM_IDS 0
 #endif
