@@ -4,6 +4,8 @@
 
 #include "JuceHeader.h"
 
+#include <atomic>
+
 struct AudialCredentials {
   String base_url;
   String user_id;
@@ -35,9 +37,16 @@ class AudialClient {
       String error;
     };
 
-    static constexpr int kTimeoutMs = 60000;
+    // Bounds every blocking network call: ~ResynthSection waits kTimeoutMs + 2 s for the
+    // job thread, so this is what a host sees in the worst case when a window is closed
+    // mid-transfer.
+    static constexpr int kTimeoutMs = 15000;
 
     explicit AudialClient(AudialCredentials credentials) : credentials_(std::move(credentials)) { }
+
+    // Optional cancellation flag, owned by the caller and polled while data is uploaded.
+    // May be null, in which case nothing is cancellable and only kTimeoutMs applies.
+    void setCancelFlag(std::atomic<bool>* flag) { cancel_flag_ = flag; }
 
     static String sanitizeFilename(const String& name);
     static String buildRunBody(const String& user_id, const String& filename, const String& file_url);
@@ -51,8 +60,11 @@ class AudialClient {
     bool downloadToFile(const String& url, const File& destination);
 
   private:
+    static bool onStreamProgress(void* context, int bytes_sent, int total_bytes);
+
     HttpResult request(URL url, bool post_like, const String& method, const String& extra_headers);
     String authHeaders() const;
 
     AudialCredentials credentials_;
+    std::atomic<bool>* cancel_flag_ = nullptr;
 };

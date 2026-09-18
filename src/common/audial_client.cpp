@@ -62,7 +62,7 @@ AudialClient::ExecutionStatus AudialClient::parseExecution(const String& body) {
     }
   }
   if (status.state == "failed" && status.error.isEmpty())
-    status.error = "sound2vital failed";
+    status.error = "Audial job failed";
   return status;
 }
 
@@ -70,10 +70,16 @@ String AudialClient::authHeaders() const {
   return "x-api-key: " + credentials_.api_key + "\r\nx-user-id: " + credentials_.user_id + "\r\n";
 }
 
+bool AudialClient::onStreamProgress(void* context, int, int) {
+  std::atomic<bool>* flag = static_cast<std::atomic<bool>*>(context);
+  return !(flag && flag->load());
+}
+
 HttpResult AudialClient::request(URL url, bool post_like, const String& method, const String& extra_headers) {
   HttpResult result;
-  std::unique_ptr<InputStream> stream = url.createInputStream(post_like, nullptr, nullptr, extra_headers,
-                                                              kTimeoutMs, nullptr, &result.status, 5, method);
+  std::unique_ptr<InputStream> stream = url.createInputStream(post_like, onStreamProgress, cancel_flag_,
+                                                              extra_headers, kTimeoutMs, nullptr,
+                                                              &result.status, 5, method);
   if (stream != nullptr)
     result.body = stream->readEntireStreamAsString();
   return result;
@@ -101,8 +107,8 @@ HttpResult AudialClient::getExecution(const String& exe_id) {
 
 bool AudialClient::downloadToFile(const String& url, const File& destination) {
   int status = 0;
-  std::unique_ptr<InputStream> stream = URL(url).createInputStream(false, nullptr, nullptr, "", kTimeoutMs,
-                                                                   nullptr, &status, 5, "GET");
+  std::unique_ptr<InputStream> stream = URL(url).createInputStream(false, onStreamProgress, cancel_flag_,
+                                                                   "", kTimeoutMs, nullptr, &status, 5, "GET");
   if (stream == nullptr || status < 200 || status >= 300)
     return false;
   destination.getParentDirectory().createDirectory();

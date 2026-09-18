@@ -2,6 +2,8 @@
 #pragma once
 
 #include "JuceHeader.h"
+
+#include <atomic>
 #include "overlay.h"
 #include "audial_client.h"
 #include "open_gl_image_component.h"
@@ -81,6 +83,9 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     Job job_;
     File sample_;
     std::atomic<State> state_ { State::kIdle };
+    // Handed to AudialClient so a blocked transfer gives up instead of running out
+    // the socket timeout; set by cancelJob() and by the destructor.
+    std::atomic<bool> cancel_requested_ { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResynthSection)
 };

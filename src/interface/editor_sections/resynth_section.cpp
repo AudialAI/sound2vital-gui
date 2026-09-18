@@ -66,9 +66,13 @@ ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRou
 
 ResynthSection::~ResynthSection() {
   chooser_.reset();
-  // A window closed mid-transfer must wait out AudialClient's socket timeout rather than
-  // force-kill the thread while it is blocked in createInputStream(); a cancellable
-  // InputStream (so this can shrink back down) is a follow-up.
+  // A window closed mid-transfer still has to wait for the job thread rather than force-kill it
+  // while it is blocked in createInputStream(). The cancel flag drops an in-flight upload at the
+  // next progress callback and AudialClient::kTimeoutMs (15 s) bounds everything else, so the
+  // worst case a host sees here is ~17 s instead of a full minute per request.
+  cancel_requested_ = true;
+  job_.signalThreadShouldExit();
+  job_.notify();
   job_.stopThread(AudialClient::kTimeoutMs + 2000);
 }
 
@@ -159,6 +163,8 @@ void ResynthSection::setVisible(bool should_be_visible) {
 }
 
 void ResynthSection::buttonClicked(Button* clicked_button) {
+  // Every button in this overlay is momentary; without this they latch on after one click.
+  clicked_button->setToggleState(false, dontSendNotification);
   if (clicked_button == browse_button_.get())
     browseForSample();
   else if (clicked_button == save_button_.get())
@@ -255,6 +261,7 @@ void ResynthSection::startJob(const File& sample) {
     return;
   }
   sample_ = sample;
+  cancel_requested_ = false;
   setState(State::kUploading, "Uploading " + sample.getFileName() + "...");
   job_.startThread();
 }
@@ -264,6 +271,7 @@ void ResynthSection::cancelJob() {
   // (up to AudialClient::kTimeoutMs), so stopThread() here would freeze the UI and then
   // pthread_cancel a thread on a live socket. Signal + wake it and let Job::run() report
   // "Cancelled" itself once runJob() actually returns.
+  cancel_requested_ = true;
   job_.signalThreadShouldExit();
   job_.notify();
   setState(State::kIdle, "Cancelling...");
@@ -289,6 +297,7 @@ void ResynthSection::postState(State state, const String& message) {
 
 void ResynthSection::runJob() {
   AudialClient client(LoadSave::loadAudialCredentials());
+  client.setCancelFlag(&cancel_requested_);
   String exe_id = Uuid().toDashedString();
   String filename = AudialClient::sanitizeFilename(sample_.getFileName());
 
@@ -304,7 +313,7 @@ void ResynthSection::runJob() {
     return;
   }
 
-  postState(State::kSubmitting, "Submitting to sound2vital...");
+  postState(State::kSubmitting, "Submitting to Audial...");
   HttpResult run = client.runSound2Vital(filename, file_url);
   if (job_.threadShouldExit()) return;
   if (!run.ok()) {

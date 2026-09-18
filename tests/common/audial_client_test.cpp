@@ -46,6 +46,14 @@ class AudialClientTest : public UnitTest {
       expectEquals(garbage.state, String());
       expect(garbage.error.isNotEmpty());
 
+      AudialClient::ExecutionStatus failed_silently = AudialClient::parseExecution("{\"state\":\"failed\"}");
+      expectEquals(failed_silently.error, String("Audial job failed"));
+
+      beginTest("network timeout is bounded");
+      // ~ResynthSection waits kTimeoutMs + 2000 ms for the job thread, so this constant is what a
+      // host is blocked for in the worst case when its window is closed mid-transfer.
+      expectEquals(AudialClient::kTimeoutMs, 15000);
+
       beginTest("credentials completeness");
       AudialCredentials creds { "https://api.audialmusic.ai", "u1", "k" };
       expect(creds.complete());

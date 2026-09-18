@@ -1339,6 +1339,8 @@ AudialCredentials LoadSave::loadAudialCredentials() {
     credentials.user_id = String(data["audial_user_id"].get<std::string>());
   if (data.count("audial_api_key") && data["audial_api_key"].is_string())
     credentials.api_key = String(data["audial_api_key"].get<std::string>());
+  // Every request appends "/api/...", so a pasted "https://host/" would produce a double slash.
+  credentials.base_url = credentials.base_url.trimCharactersAtEnd("/");
   return credentials;
 }
 
