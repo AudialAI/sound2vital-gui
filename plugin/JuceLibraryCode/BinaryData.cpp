@@ -9091,170 +9091,6 @@ static const unsigned char temp_binary_data_22[] =
 
 const char* shuffle_svg = (const char*) temp_binary_data_22;
 
-//================== vital_ring.svg ==================
-static const unsigned char temp_binary_data_23[] =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"
-"<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 1701 1701\" width=\"1701\" height=\"1701\"><defs><path d=\"M155.32 448.98C155.31 449 820.1 1487"
-".79 850.36 1653.31C850.39 1653.31 850.61 1653.31 850.64 1653.31C855.63 1625.99 1438.76 540.21 1545.82 449.22C1545.81 449.2 1545.76 449.12 1545.68 448.98C688.51 449.26 225.06 449.26 155.32 448.98Z\" id=\"k39Dh1wFs7\"></path></defs><g><g><g><g><filter "
-"id=\"shadow13560384\" x=\"146.32\" y=\"439.98\" width=\"1409.5\" height=\"1223.33\" filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\"><feFlood></feFlood><feComposite in2=\"SourceAlpha\" operator=\"in\"></feComposite><feGaussianBlur std"
-"Deviation=\"1\"></feGaussianBlur><feOffset dx=\"1\" dy=\"1\" result=\"afterOffset\"></feOffset><feFlood flood-color=\"#000000\" flood-opacity=\"0.5\"></feFlood><feComposite in2=\"afterOffset\" operator=\"in\"></feComposite><feMorphology operator=\"di"
-"late\" radius=\"1\"></feMorphology><feComposite in2=\"SourceAlpha\" operator=\"out\"></feComposite></filter><path d=\"M155.32 448.98C155.31 449 820.1 1487.79 850.36 1653.31C850.39 1653.31 850.61 1653.31 850.64 1653.31C855.63 1625.99 1438.76 540.21 15"
-"45.82 449.22C1545.81 449.2 1545.76 449.12 1545.68 448.98C688.51 449.26 225.06 449.26 155.32 448.98Z\" id=\"b2btxBmqDq\" fill=\"white\" fill-opacity=\"1\" filter=\"url(#shadow13560384)\"></path></g><use xlink:href=\"#k39Dh1wFs7\" opacity=\"1\" fill=\""
-"#000000\" fill-opacity=\"1\"></use><g><use xlink:href=\"#k39Dh1wFs7\" opacity=\"1\" fill-opacity=\"0\" stroke=\"#000000\" stroke-width=\"1\" stroke-opacity=\"0\"></use></g><g><filter id=\"shadow3195237\" x=\"146.32\" y=\"439.98\" width=\"1409.5\" hei"
-"ght=\"1223.33\" filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\"><feFlood></feFlood><feComposite in2=\"SourceAlpha\" operator=\"out\"></feComposite><feGaussianBlur stdDeviation=\"1\"></feGaussianBlur><feOffset dx=\"1\" dy=\"1\" result"
-"=\"afterOffset\"></feOffset><feFlood flood-color=\"#000000\" flood-opacity=\"0.5\"></feFlood><feComposite in2=\"afterOffset\" operator=\"in\"></feComposite><feMorphology operator=\"dilate\" radius=\"1\"></feMorphology><feComposite in2=\"SourceAlpha\""
-" operator=\"in\"></feComposite></filter><path d=\"M155.32 448.98C155.31 449 820.1 1487.79 850.36 1653.31C850.39 1653.31 850.61 1653.31 850.64 1653.31C855.63 1625.99 1438.76 540.21 1545.82 449.22C1545.81 449.2 1545.76 449.12 1545.68 448.98C688.51 449."
-"26 225.06 449.26 155.32 448.98Z\" id=\"d6oHbGRIwo\" fill=\"white\" fill-opacity=\"1\" filter=\"url(#shadow3195237)\"></path></g></g></g></g></svg>";
-
-const char* vital_ring_svg = (const char*) temp_binary_data_23;
-
-//================== vital_v.svg ==================
-static const unsigned char temp_binary_data_24[] =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"
-"<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 1701 1701\" width=\"1701\" height=\"1701\"><defs><path d=\"M155.32 448.98C155.31 449 820.1 1487"
-".79 850.36 1653.31C850.39 1653.31 850.61 1653.31 850.64 1653.31C855.63 1625.99 1438.76 540.21 1545.82 449.22C1545.81 449.2 1545.76 449.12 1545.68 448.98C688.51 449.26 225.06 449.26 155.32 448.98Z\" id=\"k39Dh1wFs7\"></path></defs><g><g><g><g><filter "
-"id=\"shadow13560384\" x=\"146.32\" y=\"439.98\" width=\"1409.5\" height=\"1223.33\" filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\"><feFlood></feFlood><feComposite in2=\"SourceAlpha\" operator=\"in\"></feComposite><feGaussianBlur std"
-"Deviation=\"1\"></feGaussianBlur><feOffset dx=\"1\" dy=\"1\" result=\"afterOffset\"></feOffset><feFlood flood-color=\"#000000\" flood-opacity=\"0.5\"></feFlood><feComposite in2=\"afterOffset\" operator=\"in\"></feComposite><feMorphology operator=\"di"
-"late\" radius=\"1\"></feMorphology><feComposite in2=\"SourceAlpha\" operator=\"out\"></feComposite></filter><path d=\"M155.32 448.98C155.31 449 820.1 1487.79 850.36 1653.31C850.39 1653.31 850.61 1653.31 850.64 1653.31C855.63 1625.99 1438.76 540.21 15"
-"45.82 449.22C1545.81 449.2 1545.76 449.12 1545.68 448.98C688.51 449.26 225.06 449.26 155.32 448.98Z\" id=\"b2btxBmqDq\" fill=\"white\" fill-opacity=\"1\" filter=\"url(#shadow13560384)\"></path></g><use xlink:href=\"#k39Dh1wFs7\" opacity=\"1\" fill=\""
-"#000000\" fill-opacity=\"1\"></use><g><use xlink:href=\"#k39Dh1wFs7\" opacity=\"1\" fill-opacity=\"0\" stroke=\"#000000\" stroke-width=\"1\" stroke-opacity=\"0\"></use></g><g><filter id=\"shadow3195237\" x=\"146.32\" y=\"439.98\" width=\"1409.5\" hei"
-"ght=\"1223.33\" filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\"><feFlood></feFlood><feComposite in2=\"SourceAlpha\" operator=\"out\"></feComposite><feGaussianBlur stdDeviation=\"1\"></feGaussianBlur><feOffset dx=\"1\" dy=\"1\" result"
-"=\"afterOffset\"></feOffset><feFlood flood-color=\"#000000\" flood-opacity=\"0.5\"></feFlood><feComposite in2=\"afterOffset\" operator=\"in\"></feComposite><feMorphology operator=\"dilate\" radius=\"1\"></feMorphology><feComposite in2=\"SourceAlpha\""
-" operator=\"in\"></feComposite></filter><path d=\"M155.32 448.98C155.31 449 820.1 1487.79 850.36 1653.31C850.39 1653.31 850.61 1653.31 850.64 1653.31C855.63 1625.99 1438.76 540.21 1545.82 449.22C1545.81 449.2 1545.76 449.12 1545.68 448.98C688.51 449."
-"26 225.06 449.26 155.32 448.98Z\" id=\"d6oHbGRIwo\" fill=\"white\" fill-opacity=\"1\" filter=\"url(#shadow3195237)\"></path></g></g></g></g></svg>";
-
-const char* vital_v_svg = (const char*) temp_binary_data_24;
-
-//================== vital_word.svg ==================
-static const unsigned char temp_binary_data_25[] =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n"
-"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20010904//EN\"\r\n"
-"              \"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\r\n"
-"\r\n"
-"<svg xmlns=\"http://www.w3.org/2000/svg\"\r\n"
-"     width=\"13in\" height=\"3.41667in\"\r\n"
-"     viewBox=\"0 0 936 246\">\r\n"
-"  <path id=\"Selection\"\r\n"
-"        d=\"M 160.33,80.00\r\n"
-"           C 162.88,76.22 170.06,65.97 172.53,63.56\r\n"
-"             175.63,63.53 179.96,63.12 183.00,62.83\r\n"
-"             183.00,62.83 208.00,60.00 208.00,60.00\r\n"
-"             208.00,60.00 225.00,57.11 225.00,57.11\r\n"
-"             229.12,56.16 234.04,55.35 237.83,54.39\r\n"
-"             227.63,62.12 214.13,81.31 206.13,92.00\r\n"
-"             184.33,121.10 157.96,166.23 144.45,200.00\r\n"
-"             144.45,200.00 138.42,217.00 138.42,217.00\r\n"
-"             138.42,217.00 134.27,234.18 134.27,234.18\r\n"
-"             129.92,211.04 118.85,190.38 108.36,169.55\r\n"
-"             87.99,129.08 62.15,87.93 31.00,55.00\r\n"
-"             31.00,55.00 45.00,57.72 45.00,57.72\r\n"
-"             45.00,57.72 73.00,61.91 73.00,61.91\r\n"
-"             73.00,61.91 88.00,63.00 88.00,63.00\r\n"
-"             88.00,63.00 96.69,63.56 96.69,63.56\r\n"
-"             96.69,63.56 108.00,79.00 108.00,79.00\r\n"
-"             108.00,79.00 124.42,105.00 124.42,105.00\r\n"
-"             124.42,105.00 134.31,121.69 134.31,121.69\r\n"
-"             134.31,121.69 134.38,121.50 134.38,121.50\r\n"
-"             139.14,110.50 153.22,90.54 160.33,80.00 Z\r\n"
-"           M 935.96,245.98M 336.00,61.00\r\n"
-"           C 336.00,61.00 336.00,207.00 336.00,207.00\r\n"
-"             336.00,207.00 298.00,207.00 298.00,207.00\r\n"
-"             298.00,207.00 298.00,61.00 298.00,61.00\r\n"
-"             298.00,61.00 336.00,61.00 336.00,61.00 Z\r\n"
-"           M 532.00,61.00\r\n"
-"           C 532.00,61.00 532.00,89.00 532.00,89.00\r\n"
-"             532.00,89.00 484.00,89.00 484.00,89.00\r\n"
-"             484.00,89.00 484.00,207.00 484.00,207.00\r\n"
-"             484.00,207.00 446.00,207.00 446.00,207.00\r\n"
-"             446.00,207.00 446.00,89.00 446.00,89.00\r\n"
-"             446.00,89.00 398.00,89.00 398.00,89.00\r\n"
-"             398.00,89.00 398.00,61.00 398.00,61.00\r\n"
-"             398.00,61.00 532.00,61.00 532.00,61.00 Z\r\n"
-"           M 677.00,61.00\r\n"
-"           C 677.00,61.00 692.58,104.00 692.58,104.00\r\n"
-"             692.58,104.00 711.77,156.00 711.77,156.00\r\n"
-"             711.77,156.00 716.05,169.00 716.05,169.00\r\n"
-"             716.05,169.00 730.00,207.00 730.00,207.00\r\n"
-"             730.00,207.00 699.00,207.00 699.00,207.00\r\n"
-"             697.02,206.99 692.01,207.01 692.01,206.99\r\n"
-"             692.02,207.00 686.62,192.52 685.58,189.00\r\n"
-"             684.84,186.51 682.91,180.27 682.73,180.09\r\n"
-"             683.00,179.91 676.21,180.00 674.00,180.00\r\n"
-"             674.00,180.00 633.00,180.00 633.00,180.00\r\n"
-"             630.36,180.01 623.99,180.00 624.00,180.02\r\n"
-"             623.99,180.02 618.96,196.13 618.03,199.00\r\n"
-"             617.28,201.29 614.99,206.99 614.98,207.00\r\n"
-"             614.98,207.00 610.79,206.96 609.00,207.00\r\n"
-"             609.00,207.00 577.00,207.00 577.00,207.00\r\n"
-"             577.00,207.00 590.95,169.00 590.95,169.00\r\n"
-"             590.95,169.00 595.23,156.00 595.23,156.00\r\n"
-"             595.23,156.00 614.42,104.00 614.42,104.00\r\n"
-"             614.42,104.00 630.00,61.00 630.00,61.00\r\n"
-"             630.00,61.00 677.00,61.00 677.00,61.00 Z\r\n"
-"           M 830.00,61.00\r\n"
-"           C 830.00,61.00 830.00,179.00 830.00,179.00\r\n"
-"             830.00,179.00 896.00,179.00 896.00,179.00\r\n"
-"             896.00,179.00 896.00,207.00 896.00,207.00\r\n"
-"             896.00,207.00 792.00,207.00 792.00,207.00\r\n"
-"             792.00,207.00 792.00,61.00 792.00,61.00\r\n"
-"             792.00,61.00 830.00,61.00 830.00,61.00 Z\r\n"
-"           M 646.00,118.00\r\n"
-"           C 646.00,118.00 634.00,153.00 634.00,153.00\r\n"
-"             634.00,153.00 673.00,153.00 673.00,153.00\r\n"
-"             673.00,153.00 667.67,137.00 667.67,137.00\r\n"
-"             667.67,137.00 654.00,97.00 654.00,97.00\r\n"
-"             654.00,97.00 646.00,118.00 646.00,118.00 Z\r\n"
-"           M 0.00,0.01\" />\r\n"
-"</svg>\r\n";
-
-const char* vital_word_svg = (const char*) temp_binary_data_25;
-
-//================== vital_word_ring.svg ==================
-static const unsigned char temp_binary_data_26[] =
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n"
-"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20010904//EN\"\r\n"
-"              \"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\r\n"
-"\r\n"
-"<svg xmlns=\"http://www.w3.org/2000/svg\"\r\n"
-"     width=\"13in\" height=\"3.41667in\"\r\n"
-"     viewBox=\"0 0 936 246\">\r\n"
-"  <path id=\"Path #1\"\r\n"
-"        d=\"M 935.97,246.00M 0.00,0.01M 95.00,27.31\r\n"
-"           C 118.96,16.34 146.70,16.58 171.00,26.20\r\n"
-"             180.66,30.03 193.85,37.60 200.00,46.00\r\n"
-"             200.00,46.00 188.00,46.96 188.00,46.96\r\n"
-"             178.20,47.34 174.70,42.28 166.00,38.62\r\n"
-"             155.57,34.22 141.32,31.31 130.00,32.09\r\n"
-"             120.20,32.76 110.00,35.55 101.00,39.43\r\n"
-"             101.00,39.43 87.00,46.99 87.00,46.99\r\n"
-"             83.62,48.13 71.45,46.41 68.00,45.00\r\n"
-"             78.63,37.05 82.26,33.14 95.00,27.31 Z\r\n"
-"           M 52.29,106.00\r\n"
-"           C 53.09,108.47 52.75,110.81 52.69,113.25\r\n"
-"             52.69,113.25 53.44,127.00 53.44,127.00\r\n"
-"             55.19,137.98 59.48,148.65 65.44,158.00\r\n"
-"             70.26,165.59 77.86,173.67 85.00,179.10\r\n"
-"             85.00,179.10 101.30,189.63 101.30,189.63\r\n"
-"             103.78,192.26 107.14,201.34 108.00,205.00\r\n"
-"             99.62,203.09 91.32,199.24 84.00,194.80\r\n"
-"             48.98,173.54 32.05,130.47 42.00,91.00\r\n"
-"             44.67,93.84 51.44,102.53 52.29,106.00 Z\r\n"
-"           M 226.74,90.04\r\n"
-"           C 228.79,105.47 229.03,102.93 229.00,119.00\r\n"
-"             228.96,146.43 212.16,175.92 190.00,191.56\r\n"
-"             179.51,198.96 170.94,202.02 159.00,206.00\r\n"
-"             159.89,202.23 163.03,193.31 165.65,190.63\r\n"
-"             165.65,190.63 183.00,179.52 183.00,179.52\r\n"
-"             191.24,173.39 197.72,166.64 203.30,158.00\r\n"
-"             214.26,141.04 215.87,129.51 216.00,110.00\r\n"
-"             215.22,100.04 220.27,99.30 225.26,91.52\r\n"
-"             225.26,91.52 226.74,90.04 226.74,90.04 Z\" />\r\n"
-"</svg>\r\n";
-
-const char* vital_word_ring_svg = (const char*) temp_binary_data_26;
-
 
 const char* getNamedResource (const char* resourceNameUTF8, int& numBytes)
 {
@@ -9289,10 +9125,6 @@ const char* getNamedResource (const char* resourceNameUTF8, int& numBytes)
         case 0xee7a107c:  numBytes = 1588; return phaser_svg;
         case 0xd06e9e77:  numBytes = 14394; return reverb_svg;
         case 0x1954101e:  numBytes = 382; return shuffle_svg;
-        case 0xa1c1eea8:  numBytes = 2658; return vital_ring_svg;
-        case 0x58c73d28:  numBytes = 2658; return vital_v_svg;
-        case 0xed364e82:  numBytes = 3979; return vital_word_svg;
-        case 0xd6989277:  numBytes = 1888; return vital_word_ring_svg;
         default: break;
     }
 
@@ -9324,11 +9156,7 @@ const char* namedResourceList[] =
     "link_svg",
     "phaser_svg",
     "reverb_svg",
-    "shuffle_svg",
-    "vital_ring_svg",
-    "vital_v_svg",
-    "vital_word_svg",
-    "vital_word_ring_svg"
+    "shuffle_svg"
 };
 
 const char* originalFilenames[] =
@@ -9355,11 +9183,7 @@ const char* originalFilenames[] =
     "link.svg",
     "phaser.svg",
     "reverb.svg",
-    "shuffle.svg",
-    "vital_ring.svg",
-    "vital_v.svg",
-    "vital_word.svg",
-    "vital_word_ring.svg"
+    "shuffle.svg"
 };
 
 const char* getNamedResourceOriginalFilename (const char* resourceNameUTF8)
