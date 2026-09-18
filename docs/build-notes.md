@@ -545,9 +545,13 @@ median of 5 runs after warm-up, via `qualification/cpu_cost.py`:
 ### PLUGIN_COMMIT
 
 Tag `backend-v1` pins the render backend for the microservice
-(`sound2vital-runpod` `PLUGIN_COMMIT`). Its sha is recorded once the tag is
-created at the final commit of this task (see the report for the exact
-value): `git rev-parse backend-v1`.
+(`sound2vital-runpod` `PLUGIN_COMMIT`):
+
+```
+PLUGIN_COMMIT=db266dfdea3acfde3f440712e5bc63a589aa2476
+```
+
+(`git rev-parse backend-v1`, pointing at this task's final commit.)
 
 ### Pending user approval
 
