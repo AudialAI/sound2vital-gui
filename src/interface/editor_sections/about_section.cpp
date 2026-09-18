@@ -39,7 +39,7 @@ AboutSection::AboutSection(const String& name) : Overlay(name), body_(Shaders::k
   name_text_ = std::make_unique<PlainTextComponent>("plugin name", "AUDIAL SYNTH");
   addOpenGlComponent(name_text_.get());
   name_text_->setFontType(PlainTextComponent::kRegular);
-  name_text_->setTextSize(40.0f);
+  name_text_->setTextSize(26.0f);
 
   version_text_ = std::make_unique<PlainTextComponent>("version", String("version  ") + ProjectInfo::versionString);
   addOpenGlComponent(version_text_.get());

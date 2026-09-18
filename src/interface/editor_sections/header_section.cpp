@@ -276,7 +276,9 @@ void HeaderSection::resized() {
   temporary_tab_->setTextSize(temporary_height);
 
   int temporary_x = exit_temporary_button_->getRight() + getHeight() * kPaddingLeft;
-  int temporary_width = synth_preset_selector_->getX() - temporary_x;
+  // Stop at RESYNTH, not at the preset selector: the button sits between the two and a long
+  // wavetable name would otherwise be drawn straight over it.
+  int temporary_width = resynth_button_->getX() - component_padding - temporary_x;
   temporary_tab_->setBounds(temporary_x, 0, temporary_width, getHeight());
 
   SynthSection::resized();
