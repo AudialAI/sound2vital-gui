@@ -1,16 +1,18 @@
-Source: vital
+Source: audialsynth
 Section: sound
 Priority: optional
-Maintainer: Matt Tytel <matt@vital.audio>
-Build-Depends: debhelper (>= 9), mesa-common-dev, libasound2-dev, libfreetype6-dev, libx11-dev, libxrandr-dev, libxinerama-dev, libxcursor-dev, freeglut3-dev, libxcomposite-dev, libjack-dev, libcurl4-gnutls-dev, libfftw3-3, libsecret-1-0, libglib2.0-0
+Maintainer: Audial <support@audialmusic.ai>
+Build-Depends: debhelper (>= 9), mesa-common-dev, libasound2-dev, libfreetype6-dev, libx11-dev, libxrandr-dev, libxinerama-dev, libxcursor-dev, freeglut3-dev, libxcomposite-dev, libjack-dev, libcurl4-gnutls-dev, libfftw3-3
 Standards-Version: 3.9.6
-Homepage: https://vital.audio
-#Vcs-Git: git://anonscm.debian.org/collab-maint/helm.git
-#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/helm.git;a=summary
+Homepage: https://audialmusic.ai
+#Vcs-Git: git://anonscm.debian.org/collab-maint/audialsynth.git
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/audialsynth.git;a=summary
 
-Package: vital
+Package: audialsynth
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: powerful wavetable synthesizer with realtime modulation feedback
- vital is a MIDI enabled polyphonic music synthesizer with an easy to use
- parameter modulation system with real-time graphical feedback.
+Description: Audial Synth - wavetable synthesizer with sample resynthesis
+ Audial Synth is a MIDI enabled polyphonic wavetable synthesizer with an easy
+ to use parameter modulation system and real-time graphical feedback. Its
+ Resynth panel sends a short sample to the Audial API and loads the editable
+ patch that comes back.

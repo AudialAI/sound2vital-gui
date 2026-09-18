@@ -256,8 +256,12 @@ link recipes recursive with a leading `+`.
 +	+$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_VST3) ...
 ```
 
-Applied to all four `$(CXX) -o` link recipes in the two Linux Makefiles (VST, VST3, Standalone
-plug-in, and the standalone app) so a parallel `make` works for every target, not just `vst3`.
+Applied at first to only the four `$(CXX) -o` link recipes in `plugin/builds/linux_vst/Makefile`
+and `standalone/builds/linux/Makefile` (VST, VST3, Standalone plug-in, and the standalone app);
+`tests/builds/linux/Makefile`, `headless/builds/linux/Makefile` and
+`plugin/builds/linux_lv2/Makefile.binary` were missed and would still have died on a parallel
+Release link. The final-review wave added the `+` there too, so all seven link recipes in the Linux
+Makefiles now carry it.
 Nothing else changes for a real build: the same command line is run, with the jobserver descriptors
 kept open. The one documented side effect of `+` is that `make -n` now actually runs those link
 commands instead of only printing them (GNU make always executes `+` lines, even in dry-run mode);
@@ -314,7 +318,10 @@ existing display string changes:
 
 The style range stays 0-9 because it has to cover every filter model (comb uses style 5); the
 per-model names the GUI shows (`FilterSection::getStyleName`) are unaffected, as they index the
-model's own table. Nothing in `src/synthesis/` was touched. After the fix, sweeping all 2852
+model's own table. Note that `destination`, `sample_destination` and `view_spectrogram` each lost
+one step of range here, so their host-normalised automation values differ from the upstream build's
+by one step; raw preset values are unaffected, since the removed index was never reachable or
+routed. Nothing in `src/synthesis/` was touched. After the fix, sweeping all 2852
 parameters x 1001 raw values through `get_text_for_raw_value` completes cleanly:
 
 ```
