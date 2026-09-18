@@ -43,3 +43,4 @@ docker/out/
 qualification/
 *.xcuserdatad/
 .DS_Store
+dist/
