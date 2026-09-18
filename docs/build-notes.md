@@ -545,13 +545,19 @@ median of 5 runs after warm-up, via `qualification/cpu_cost.py`:
 ### PLUGIN_COMMIT
 
 Tag `backend-v1` pins the render backend for the microservice
-(`sound2vital-runpod` `PLUGIN_COMMIT`):
+(`sound2vital-runpod` `PLUGIN_COMMIT`). The tag points at this task's final
+commit (a commit cannot embed its own hash, so `git tag -f backend-v1` was
+re-run once after this note was added, to move the tag onto the commit that
+records it). The authoritative value is always:
 
 ```
-PLUGIN_COMMIT=db266dfdea3acfde3f440712e5bc63a589aa2476
+PLUGIN_COMMIT=$(git rev-parse backend-v1)
 ```
 
-(`git rev-parse backend-v1`, pointing at this task's final commit.)
+As of this writing that resolved to `db266dfdea3acfde3f440712e5bc63a589aa2476`
+before the tag was moved to the final commit; see the Task 11 report
+(`.superpowers/sdd/2026-09-16-sound2vital-gui/task-11-report.md`) for the
+exact final sha recorded at hand-off.
 
 ### Pending user approval
 
