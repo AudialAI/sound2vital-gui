@@ -175,7 +175,7 @@ requalification measures directly.
   concrete identifiers; every occurrence is in the rename task.
 - The header button and section are called "Resynth"; also a working name.
 - Upstream remote URL `https://github.com/mtytel/vital.git`; the fork's GitHub
-  URL is assumed to be `https://github.com/zfarrell13/sound2vital-gui.git`
+  URL is `https://github.com/AudialAI/sound2vital-gui.git` (confirmed 2026-09-22)
   (the microservice Dockerfile's default build argument).
 - The microservice loads the Linux VST3, not the standalone `--render` CLI:
   the project's own notes record that CLI renders ignore wavetable and sample

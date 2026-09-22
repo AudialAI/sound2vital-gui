@@ -8,7 +8,8 @@ It is a GPLv3 fork of the synthesizer written by Matt Tytel, whose source is at
 [github.com/mtytel/vital](https://github.com/mtytel/vital). Audial Synth is not affiliated with or
 endorsed by that project; it is a separate product, separately named, and it talks to no service
 belonging to it. The upstream copyright notices are kept in every file that carries them, and in
-`LICENSE` and `debian/copyright`.
+`LICENSE` and `debian/copyright`. This fork's source lives at
+[github.com/AudialAI/sound2vital-gui](https://github.com/AudialAI/sound2vital-gui).
 
 ## Resynth
 

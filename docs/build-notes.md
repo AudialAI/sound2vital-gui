@@ -570,4 +570,4 @@ that docs commit; the two trees differ only in `docs/`. Always confirm with
 No remote is configured and nothing was pushed. `docs/distribution.md`
 documents `git push -u origin main --tags` as the next step once the user
 confirms the GitHub URL used in `SOURCE.txt`
-(`https://github.com/zfarrell13/sound2vital-gui`).
+(`https://github.com/AudialAI/sound2vital-gui`).
