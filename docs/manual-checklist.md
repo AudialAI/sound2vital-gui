@@ -10,5 +10,6 @@ Open `standalone/builds/osx/build/Release/AudialSynth.app`, click RESYNTH.
 3. Drop a 3 s wav: status goes Uploading → Submitting → Processing... N s → Downloading; the panel closes and the header preset name is the new `<sample>_<stamp>` file; sound plays from the keyboard; the preset browser lists it under User/Resynth.
 4. Restart the mock with `--fail`, drop the 3 s wav: status shows "Input is 25.0 s; the limit is 20 s" and the panel stays open.
 5. Start a job, click Cancel during Processing: status "Cancelled", Browse visible again.
+6. Restart the mock with `--unsubscribed`, drop the 3 s wav: the upload succeeds, then status shows "Run failed: This feature needs an active Audial subscription. Subscribe at audialmusic.ai and try again." and the panel stays open. (Against the real API this is what an account without an active subscription sees.)
 6. Stop the mock, drop the 3 s wav: status "Upload failed: no connection (check base URL / network)".
 7. Load the VST3 in a DAW (Ableton or Logic) and repeat step 3.

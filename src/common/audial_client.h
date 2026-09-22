@@ -22,11 +22,11 @@ struct HttpResult {
 
   bool ok() const { return status >= 200 && status < 300; }
 
-  String describe() const {
-    if (status == 0)
-      return "no connection (check base URL / network)";
-    return "HTTP " + String(status) + ": " + (body.isEmpty() ? String("<empty>") : body.substring(0, 160));
-  }
+  // Human-readable failure text for the overlay. The Audial API answers errors with
+  // JSON {"error": "...", "code": "..."}; when the body parses as that, the message is
+  // shown on its own (a 402 SUBSCRIPTION_REQUIRED reads as "This feature needs an
+  // active Audial subscription..."). Anything else falls back to "HTTP <status>: <body>".
+  String describe() const;
 };
 
 class AudialClient {

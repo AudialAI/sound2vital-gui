@@ -7,6 +7,18 @@
 
 using json = nlohmann::json;
 
+String HttpResult::describe() const {
+  if (status == 0)
+    return "no connection (check base URL / network)";
+  json parsed = json::parse(body.toStdString(), nullptr, false);
+  if (parsed.is_object() && parsed.count("error") && parsed["error"].is_string()) {
+    String message = String(parsed["error"].get<std::string>()).trim();
+    if (message.isNotEmpty())
+      return message;
+  }
+  return "HTTP " + String(status) + ": " + (body.isEmpty() ? String("<empty>") : body.substring(0, 160));
+}
+
 String AudialClient::sanitizeFilename(const String& name) {
   String result;
   for (int i = 0; i < name.length(); ++i) {

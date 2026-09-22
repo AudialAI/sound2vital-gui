@@ -17,7 +17,7 @@ executions = {}
 lock = threading.Lock()
 
 
-def make_handler(preset: Path, port: int, delay: float, fail: bool):
+def make_handler(preset: Path, port: int, delay: float, fail: bool, unsubscribed: bool = False):
     class Handler(BaseHTTPRequestHandler):
         def _json(self, status, payload):
             data = json.dumps(payload).encode()
@@ -41,6 +41,10 @@ def make_handler(preset: Path, port: int, delay: float, fail: bool):
         def do_POST(self):
             if self.path != "/api/functions/run/sound2vital" or not self._authorised():
                 return self._json(403, {"error": "Unauthorized"})
+            if unsubscribed:  # what the real API returns for an account without an active subscription
+                return self._json(402, {"error": "This feature needs an active Audial subscription. "
+                                                 "Subscribe at audialmusic.ai and try again.",
+                                        "code": "SUBSCRIPTION_REQUIRED"})
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))))
             exe = str(uuid.uuid4())
             with lock:
@@ -83,5 +87,6 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--delay", type=float, default=6.0)
     parser.add_argument("--fail", action="store_true", help="complete every job as failed")
+    parser.add_argument("--unsubscribed", action="store_true", help="refuse every run with 402 SUBSCRIPTION_REQUIRED")
     args = parser.parse_args()
-    ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(args.preset.resolve(), args.port, args.delay, args.fail)).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(args.preset.resolve(), args.port, args.delay, args.fail, args.unsubscribed)).serve_forever()

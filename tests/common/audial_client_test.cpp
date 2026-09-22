@@ -27,6 +27,26 @@ class AudialClientTest : public UnitTest {
       expectEquals(AudialClient::parseExeId("{\"state\":\"created\"}"), String());
       expectEquals(AudialClient::parseExeId("<html>"), String());
 
+      beginTest("describe http results");
+      HttpResult no_connection;
+      expectEquals(no_connection.describe(), String("no connection (check base URL / network)"));
+      HttpResult subscription;
+      subscription.status = 402;
+      subscription.body = "{\"error\":\"This feature needs an active Audial subscription. Subscribe at audialmusic.ai and try again.\",\"code\":\"SUBSCRIPTION_REQUIRED\"}";
+      expectEquals(subscription.describe(),
+                   String("This feature needs an active Audial subscription. Subscribe at audialmusic.ai and try again."));
+      HttpResult unauthorized;
+      unauthorized.status = 403;
+      unauthorized.body = "Unauthorized";
+      expectEquals(unauthorized.describe(), String("HTTP 403: Unauthorized"));
+      HttpResult empty_error;
+      empty_error.status = 500;
+      empty_error.body = "{\"error\":\"\"}";
+      expectEquals(empty_error.describe(), String("HTTP 500: {\"error\":\"\"}"));
+      HttpResult empty;
+      empty.status = 502;
+      expectEquals(empty.describe(), String("HTTP 502: <empty>"));
+
       beginTest("parse execution");
       AudialClient::ExecutionStatus done = AudialClient::parseExecution(
           "{\"state\":\"completed\",\"preset\":{\"presetvital\":{\"filename\":\"preset.vital\",\"url\":\"https://cdn/p\"}}}");
