@@ -2,10 +2,11 @@
  * GPLv3, same terms as the rest of this source. */
 
 #include "audial_client.h"
+#include "resynth_section.h"
 
 class AudialClientTest : public UnitTest {
   public:
-    AudialClientTest() : UnitTest("Audial Client") { }
+    AudialClientTest() : UnitTest("Audial Client", "Audial") { }
 
     void runTest() override {
       beginTest("sanitize filename (text2vox rule: stem [A-Za-z0-9_-], extension [.a-z0-9])");
@@ -48,6 +49,11 @@ class AudialClientTest : public UnitTest {
       HttpResult empty;
       empty.status = 502;
       expectEquals(empty.describe(), String("HTTP 502: <empty>"));
+
+      beginTest("job time estimate grows with sample length");
+      expectWithinAbsoluteError(ResynthSection::estimateJobSeconds(0.0), 90.0, 1e-9);
+      expectWithinAbsoluteError(ResynthSection::estimateJobSeconds(10.0), 225.0, 1e-9);
+      expect(ResynthSection::estimateJobSeconds(-1.0) >= ResynthSection::estimateJobSeconds(0.0));
 
       beginTest("parse execution");
       AudialClient::ExecutionStatus done = AudialClient::parseExecution(

@@ -9,7 +9,7 @@
 #include "open_gl_image_component.h"
 #include "synth_button.h"
 
-class ResynthSection : public Overlay, public FileDragAndDropTarget {
+class ResynthSection : public Overlay, public FileDragAndDropTarget, public Timer {
   public:
     static constexpr int kPanelWidth = 560;
     static constexpr int kPanelHeight = 460;
@@ -21,6 +21,12 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     static constexpr double kMaxSampleSeconds = 20.0;
     static constexpr int kPollIntervalMs = 2000;
     static constexpr int kJobTimeoutMs = 300000;
+    // Expected job time, calibrated on the 207-source endpoint requalification (2026-09-22,
+    // RunPod cpu3c): measured time = 71 + 11.4 * sample seconds at the median; these are the
+    // ~80th percentile so the bar usually completes just before the preset arrives.
+    static constexpr double kEstimateBaseSeconds = 90.0;
+    static constexpr double kEstimatePerSampleSecond = 13.5;
+    static constexpr int kProgressBarHeight = 6;
 
     enum class State { kIdle, kUploading, kSubmitting, kProcessing, kDownloading, kDone, kError };
 
@@ -47,6 +53,9 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     bool isInterestedInFileDrag(const StringArray& files) override;
     void filesDropped(const StringArray& files, int x, int y) override;
 
+    static double estimateJobSeconds(double sample_seconds);
+
+    void timerCallback() override;
     void startJob(const File& sample);
     void cancelJob();
     void runJob();
@@ -61,10 +70,12 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     void loadPreset(const File& preset);
     void saveCredentialsFromFields();
     void setTextColors(OpenGlTextEditor* editor, const String& empty_text);
-    bool sampleIsAcceptable(const File& sample, String& reason);
+    bool sampleIsAcceptable(const File& sample, String& reason, double& seconds);
 
     OpenGlQuad body_;
     OpenGlQuad drop_zone_;
+    OpenGlQuad progress_track_;
+    OpenGlQuad progress_fill_;
     std::unique_ptr<PlainTextComponent> title_text_;
     std::unique_ptr<PlainTextComponent> help_text_;
     std::unique_ptr<PlainTextComponent> drop_text_;
@@ -82,6 +93,9 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget {
     std::unique_ptr<FileChooser> chooser_;
     Job job_;
     File sample_;
+    double sample_seconds_ = 0.0;
+    double estimate_seconds_ = 0.0;
+    std::atomic<uint32> job_started_ms_ { 0 };
     std::atomic<State> state_ { State::kIdle };
     // Handed to AudialClient so a blocked transfer gives up instead of running out
     // the socket timeout; set by cancelJob() and by the destructor.

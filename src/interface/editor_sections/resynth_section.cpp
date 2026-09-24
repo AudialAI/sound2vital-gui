@@ -8,10 +8,16 @@
 #include "synth_gui_interface.h"
 
 ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRoundedRectangleFragment),
-                                              drop_zone_(Shaders::kRoundedRectangleFragment), job_(this) {
+                                              drop_zone_(Shaders::kRoundedRectangleFragment),
+                                              progress_track_(Shaders::kRoundedRectangleFragment),
+                                              progress_fill_(Shaders::kRoundedRectangleFragment), job_(this) {
   format_manager_.registerBasicFormats();
   addOpenGlComponent(&body_);
   addOpenGlComponent(&drop_zone_);
+  addOpenGlComponent(&progress_track_);
+  addOpenGlComponent(&progress_fill_);
+  progress_track_.setVisible(false);
+  progress_fill_.setVisible(false);
 
   title_text_ = std::make_unique<PlainTextComponent>("title", "Resynth a sample");
   title_text_->setTextSize(20.0f);
@@ -125,7 +131,15 @@ void ResynthSection::resized() {
   int status_y = drop.getBottom() + 12;
   status_text_->setBounds(x, status_y, text_width, 22);
 
-  int creds_y = status_y + 36;
+  Rectangle<int> bar(x, status_y + 26, text_width, kProgressBarHeight);
+  progress_track_.setBounds(bar);
+  progress_fill_.setBounds(bar);
+  progress_track_.setRounding(kProgressBarHeight / 2.0f);
+  progress_fill_.setRounding(kProgressBarHeight / 2.0f);
+  progress_track_.setColor(findColour(Skin::kBody, true).overlaidWith(findColour(Skin::kLightenScreen, true)));
+  progress_fill_.setColor(findColour(Skin::kWidgetPrimary1, true));
+
+  int creds_y = status_y + 44;
   credentials_text_->setBounds(x, creds_y, text_width, 20);
   int field_y = creds_y + 26;
   base_url_->setBounds(x, field_y, text_width, kTextEditorHeight);
@@ -227,13 +241,25 @@ void ResynthSection::saveCredentialsFromFields() {
   setState(state_, "Credentials saved");
 }
 
-bool ResynthSection::sampleIsAcceptable(const File& sample, String& reason) {
+double ResynthSection::estimateJobSeconds(double sample_seconds) {
+  return kEstimateBaseSeconds + kEstimatePerSampleSecond * jmax(0.0, sample_seconds);
+}
+
+void ResynthSection::timerCallback() {
+  double elapsed = (Time::getMillisecondCounter() - job_started_ms_.load()) / 1000.0;
+  double fraction = estimate_seconds_ > 0.0 ? jmin(1.0, elapsed / estimate_seconds_) : 0.0;
+  // Quad coordinates run -1..1; the fill grows from the left and parks at 100 % until the
+  // preset actually arrives.
+  progress_fill_.setQuad(0, -1.0f, -1.0f, 2.0f * (float)fraction, 2.0f);
+}
+
+bool ResynthSection::sampleIsAcceptable(const File& sample, String& reason, double& seconds) {
   std::unique_ptr<AudioFormatReader> reader(format_manager_.createReaderFor(sample));
   if (reader == nullptr) {
     reason = "Could not read " + sample.getFileName();
     return false;
   }
-  double seconds = reader->lengthInSamples / reader->sampleRate;
+  seconds = reader->lengthInSamples / reader->sampleRate;
   if (seconds > kMaxSampleSeconds) {
     reason = "Sample is " + String(seconds, 1) + " s; the limit is 20 s";
     return false;
@@ -251,7 +277,8 @@ void ResynthSection::startJob(const File& sample) {
     return;
   }
   String reason;
-  if (!sampleIsAcceptable(sample, reason)) {
+  double seconds = 0.0;
+  if (!sampleIsAcceptable(sample, reason, seconds)) {
     setState(State::kError, reason);
     return;
   }
@@ -262,6 +289,11 @@ void ResynthSection::startJob(const File& sample) {
   }
   sample_ = sample;
   cancel_requested_ = false;
+  sample_seconds_ = seconds;
+  estimate_seconds_ = estimateJobSeconds(seconds);
+  job_started_ms_ = Time::getMillisecondCounter();
+  progress_fill_.setQuad(0, -1.0f, -1.0f, 0.0f, 2.0f);
+  startTimerHz(10);
   setState(State::kUploading, "Uploading " + sample.getFileName() + "...");
   job_.startThread();
 }
@@ -284,6 +316,10 @@ void ResynthSection::setState(State state, const String& message) {
                  state == State::kProcessing || state == State::kDownloading;
   cancel_button_->setVisible(running);
   browse_button_->setVisible(!running);
+  progress_track_.setVisible(running);
+  progress_fill_.setVisible(running);
+  if (!running)
+    stopTimer();
   repaint();
 }
 
@@ -348,8 +384,10 @@ void ResynthSection::runJob() {
       postState(State::kError, status.error);
       return;
     }
-    int seconds = (int)((Time::getMillisecondCounter() - started) / 1000);
-    postState(State::kProcessing, "Processing... " + String(seconds) + " s");
+    int seconds = (int)((Time::getMillisecondCounter() - job_started_ms_.load()) / 1000);
+    int expected = (int)estimate_seconds_;
+    String tail = seconds <= expected ? " of about " + String(expected) + " s" : " (taking longer than usual)";
+    postState(State::kProcessing, "Processing... " + String(seconds) + " s" + tail);
   }
 
   postState(State::kDownloading, "Downloading preset...");

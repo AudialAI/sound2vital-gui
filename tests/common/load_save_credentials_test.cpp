@@ -2,7 +2,7 @@
 
 class LoadSaveCredentialsTest : public UnitTest {
   public:
-    LoadSaveCredentialsTest() : UnitTest("LoadSave Audial credentials") { }
+    LoadSaveCredentialsTest() : UnitTest("LoadSave Audial credentials", "Audial") { }
 
     void runTest() override {
       // LoadSave has no config-path override (LoadSave::getConfigFile() is fixed), so this test
