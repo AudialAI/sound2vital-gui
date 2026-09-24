@@ -654,6 +654,19 @@ void FullInterface::showResynthSection() {
   resynth_section_->setVisible(true);
 }
 
+bool FullInterface::isInterestedInFileDrag(const StringArray& files) {
+  return resynth_section_ != nullptr && resynth_section_->isInterestedInFileDrag(files);
+}
+
+void FullInterface::fileDragEnter(const StringArray& files, int x, int y) {
+  showResynthSection();
+}
+
+void FullInterface::filesDropped(const StringArray& files, int x, int y) {
+  showResynthSection();
+  resynth_section_->filesDropped(files, x, y);
+}
+
 void FullInterface::deleteRequested(File preset) {
   delete_section_->setFileToDelete(preset);
   delete_section_->setVisible(true);

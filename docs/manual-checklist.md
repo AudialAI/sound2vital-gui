@@ -13,3 +13,4 @@ Open `standalone/builds/osx/build/Release/AudialSynth.app`, click RESYNTH.
 6. Restart the mock with `--unsubscribed`, drop the 3 s wav: the upload succeeds, then status shows "Run failed: This feature needs an active Audial subscription. Subscribe at audialmusic.ai and try again." and the panel stays open. (Against the real API this is what an account without an active subscription sees.)
 6. Stop the mock, drop the 3 s wav: status "Upload failed: no connection (check base URL / network)".
 7. Load the VST3 in a DAW (Ableton or Logic) and repeat step 3.
+8. Ableton Live: with the RESYNTH panel closed, drag an audio clip from the Arrangement or Session view onto the synth window. The panel opens on drag-enter and the drop starts the job (Live hands the clip over as a file promise; it is received into a temp folder first). A MIDI clip is refused (no drop cursor).

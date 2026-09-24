@@ -55,7 +55,7 @@ class VoiceSection;
 class FullInterface : public SynthSection, public AuthenticationSection::Listener, public HeaderSection::Listener,
                       public DownloadSection::Listener, public UpdateCheckSection::Listener,
                       public EffectsInterface::Listener, public ModulationMatrix::Listener,
-                      public OpenGLRenderer, DragAndDropContainer {
+                      public OpenGLRenderer, public FileDragAndDropTarget, DragAndDropContainer {
   public:
     static constexpr double kMinOpenGlVersion = 1.4;
 
@@ -104,6 +104,11 @@ class FullInterface : public SynthSection, public AuthenticationSection::Listene
 
     void showAboutSection() override;
     void showResynthSection() override;
+    // An audio file dragged anywhere onto the synth opens the Resynth panel and goes to it
+    // (the panel itself is also a drop target once it is visible).
+    bool isInterestedInFileDrag(const StringArray& files) override;
+    void fileDragEnter(const StringArray& files, int x, int y) override;
+    void filesDropped(const StringArray& files, int x, int y) override;
     void deleteRequested(File preset) override;
     void tabSelected(int index) override;
     void clearTemporaryTab(int current_tab) override;

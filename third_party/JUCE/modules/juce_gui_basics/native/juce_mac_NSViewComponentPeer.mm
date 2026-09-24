@@ -1301,7 +1301,18 @@ public:
         if (contentType == NSPasteboardTypeString)
             dragInfo.text = nsStringToJuce ([pasteboard stringForType: NSPasteboardTypeString]);
         else
+        {
             dragInfo.files = getDroppedFiles (pasteboard, contentType);
+
+            // AUDIAL PATCH: promised files (see receivePromisedFiles below).
+            if (dragInfo.files.isEmpty() && isPlainFilePromise (pasteboard, contentType))
+            {
+                if (type == 2)
+                    return receivePromisedFiles (pasteboard, dragInfo.position);
+
+                dragInfo.files = promisedFilePlaceholders (pasteboard);
+            }
+        }
 
         if (! dragInfo.isEmpty())
         {
@@ -1315,6 +1326,125 @@ public:
         }
 
         return false;
+    }
+
+    //==============================================================================
+    // AUDIAL PATCH (sound2vital-gui): file promises.
+    //
+    // Ableton Live drags clips out of its windows as *promised* files: the pasteboard
+    // carries kPasteboardTypeFileURLPromise and the audio is only written to disk once
+    // the destination asks for it. Stock JUCE 6.0.5 reads NSURL objects, finds none and
+    // refuses the drag. While the drag is over the view we synthesise placeholder names
+    // from the promised UTIs so FileDragAndDropTarget::isInterestedInFileDrag can decide;
+    // on drop we receive the files into a temp folder and deliver the real paths to the
+    // target asynchronously through the normal handleDragDrop path.
+    static bool isPlainFilePromise (NSPasteboard* pasteboard, NSString* contentType)
+    {
+        return [contentType isEqualToString: (NSString*) kPasteboardTypeFileURLPromise]
+            && ! [[pasteboard types] containsObject: nsStringLiteral ("CorePasteboardFlavorType 0x6974756E")];
+    }
+
+    static String extensionForPromisedType (const String& uti)
+    {
+        if (NSString* extension = [[NSWorkspace sharedWorkspace] preferredFilenameExtensionForType: juceStringToNS (uti)])
+            if ([extension length] > 0)
+                return nsStringToJuce (extension);
+
+        // Unknown type: call it audio so the drop reaches the target, which validates the
+        // received file itself and reports an unreadable one to the user.
+        return "wav";
+    }
+
+    static StringArray promisedFilePlaceholders (NSPasteboard* pasteboard)
+    {
+        StringArray names;
+
+        for (NSFilePromiseReceiver* receiver in [pasteboard readObjectsForClasses: @[[NSFilePromiseReceiver class]] options: nil])
+            for (NSString* uti in [receiver fileTypes])
+                names.add ("promised." + extensionForPromisedType (nsStringToJuce (uti)));
+
+        return names;
+    }
+
+    bool receivePromisedFiles (NSPasteboard* pasteboard, Point<int> position)
+    {
+        NSArray* receivers = [pasteboard readObjectsForClasses: @[[NSFilePromiseReceiver class]] options: nil];
+        int total = 0;
+
+        for (NSFilePromiseReceiver* receiver in receivers)
+            total += (int) [[receiver fileTypes] count];
+
+        if (total == 0)
+            return false;
+
+        auto folder = File::getSpecialLocation (File::tempDirectory)
+                          .getChildFile ("AudialSynth-drops")
+                          .getChildFile (String::toHexString (Time::currentTimeMillis()));
+
+        if (! folder.createDirectory())
+            return false;
+
+        struct PendingPromise
+        {
+            CriticalSection lock;
+            StringArray files;
+            int remaining = 0;
+            Point<int> position;
+            NSOperationQueue* queue = nullptr;
+            NSArray* receivers = nullptr;
+        };
+
+        auto pending = std::make_shared<PendingPromise>();
+        pending->remaining = total;
+        pending->position = position;
+        pending->queue = [[NSOperationQueue alloc] init];
+        pending->receivers = [receivers retain];
+        Component::SafePointer<Component> target (&component);
+        NSURL* destination = [NSURL fileURLWithPath: juceStringToNS (folder.getFullPathName()) isDirectory: YES];
+
+        for (NSFilePromiseReceiver* receiver in receivers)
+        {
+            [receiver receivePromisedFilesAtDestination: destination
+                                                options: @{}
+                                         operationQueue: pending->queue
+                                                 reader: ^(NSURL* fileURL, NSError* error)
+            {
+                bool done = false;
+
+                {
+                    const ScopedLock sl (pending->lock);
+
+                    if (error == nil && fileURL != nil)
+                        pending->files.add (nsStringToJuce ([fileURL path]));
+
+                    done = (--pending->remaining == 0);
+                }
+
+                if (done)
+                {
+                    MessageManager::callAsync ([pending, target]
+                    {
+                        if (auto* comp = target.getComponent())
+                        {
+                            if (auto* peer = comp->getPeer())
+                            {
+                                ComponentPeer::DragInfo info;
+                                info.position = pending->position;
+                                info.files = pending->files;
+
+                                if (! info.files.isEmpty())
+                                    peer->handleDragDrop (info);
+                            }
+                        }
+
+                        [pending->receivers release];
+                        [pending->queue release];
+                    });
+                }
+            }];
+        }
+
+        return true;
     }
 
     StringArray getDroppedFiles (NSPasteboard* pasteboard, NSString* contentType)

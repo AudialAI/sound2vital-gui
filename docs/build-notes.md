@@ -571,3 +571,16 @@ No remote is configured and nothing was pushed. `docs/distribution.md`
 documents `git push -u origin main --tags` as the next step once the user
 confirms the GitHub URL used in `SOURCE.txt`
 (`https://github.com/AudialAI/sound2vital-gui`).
+
+
+## Vendored JUCE patch (2026-09-24)
+
+`third_party/JUCE/modules/juce_gui_basics/native/juce_mac_NSViewComponentPeer.mm` carries an
+`AUDIAL PATCH` block: support for *promised* files on the drag pasteboard
+(`kPasteboardTypeFileURLPromise` via `NSFilePromiseReceiver`). Ableton Live drags clips out
+of its own windows this way; stock JUCE 6.0.5 only reads `NSURL` objects and refuses the
+drag. During the drag, placeholder names built from the promised UTIs are offered to
+`isInterestedInFileDrag`; on drop the files are received into
+`$TMPDIR/AudialSynth-drops/<stamp>/` and delivered through `handleDragDrop` once written.
+Re-apply it if JUCE is ever upgraded. `FullInterface` is also a `FileDragAndDropTarget`
+so a drop anywhere on the synth opens the Resynth panel.
