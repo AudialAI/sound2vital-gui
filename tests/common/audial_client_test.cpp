@@ -8,8 +8,10 @@ class AudialClientTest : public UnitTest {
     AudialClientTest() : UnitTest("Audial Client") { }
 
     void runTest() override {
-      beginTest("sanitize filename keeps [A-Za-z0-9_.-]");
-      expectEquals(AudialClient::sanitizeFilename("My Kick [2026].wav"), String("My_Kick__2026_.wav"));
+      beginTest("sanitize filename (text2vox rule: stem [A-Za-z0-9_-], extension [.a-z0-9])");
+      expectEquals(AudialClient::sanitizeFilename("My Kick [2026].wav"), String("MyKick2026.wav"));
+      expectEquals(AudialClient::sanitizeFilename("other (5) [2026-09-24 100306].wav"), String("other52026-09-24100306.wav"));
+      expectEquals(AudialClient::sanitizeFilename("a.b.c.WAV"), String("abc.wav"));
       expectEquals(AudialClient::sanitizeFilename(".hidden"), String("audio.hidden"));
       expectEquals(AudialClient::sanitizeFilename(""), String("audio"));
 

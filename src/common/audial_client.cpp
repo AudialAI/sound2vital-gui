@@ -20,13 +20,15 @@ String HttpResult::describe() const {
 }
 
 String AudialClient::sanitizeFilename(const String& name) {
-  String result;
-  for (int i = 0; i < name.length(); ++i) {
-    juce_wchar c = name[i];
-    bool keep = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-                c == '_' || c == '.' || c == '-';
-    result += keep ? String::charToString(c) : String("_");
-  }
+  // Same rule as the text2vox plugin (RenderController::runUploadAudio): the Audial API
+  // uses the uploaded filename as a Firebase Realtime Database key, which cannot contain
+  // ". # $ [ ]", and Ableton-consolidated clips always carry "[timestamp]" in their names.
+  // Keep only [A-Za-z0-9_-] in the stem and [.a-z0-9] in the extension.
+  int dot = name.lastIndexOfChar('.');
+  String stem = dot > 0 ? name.substring(0, dot) : (dot == 0 ? String() : name);
+  String extension = dot >= 0 ? name.substring(dot).toLowerCase() : String();
+  String result = stem.retainCharacters("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") +
+                  extension.retainCharacters(".abcdefghijklmnopqrstuvwxyz0123456789");
   if (result.isEmpty() || result.startsWithChar('.'))
     result = "audio" + result;
   return result;
@@ -101,8 +103,24 @@ HttpResult AudialClient::uploadReference(const File& file, const String& exe_id,
   String path = credentials_.base_url + "/api/files/" + URL::addEscapeChars(credentials_.user_id, false) +
                 "/execution/" + URL::addEscapeChars(exe_id, false) + "/reference/" +
                 URL::addEscapeChars(filename, false);
-  URL url = URL(path).withFileToUpload("file", file, "application/octet-stream");
-  return request(url, true, "PUT", authHeaders());
+  // The API records the *multipart* filename (not the URL's) as a Firebase key, and JUCE
+  // puts the local file's real name in the multipart body. As in the text2vox plugin,
+  // upload via a temp copy bearing the sanitised name.
+  File staged = File::getSpecialLocation(File::tempDirectory)
+                    .getChildFile("audialsynth_upload_" + exe_id)
+                    .getChildFile(filename);
+  staged.getParentDirectory().createDirectory();
+  staged.deleteFile();
+  if (!file.copyFileTo(staged)) {
+    HttpResult failed;
+    failed.body = "could not stage " + file.getFileName() + " for upload";
+    return failed;
+  }
+  URL url = URL(path).withFileToUpload("file", staged, "application/octet-stream");
+  HttpResult result = request(url, true, "PUT", authHeaders());
+  staged.deleteFile();
+  staged.getParentDirectory().deleteFile();
+  return result;
 }
 
 HttpResult AudialClient::runSound2Vital(const String& filename, const String& file_url) {
