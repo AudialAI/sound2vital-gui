@@ -6,13 +6,22 @@
 
 #include <atomic>
 
+// The API base URL is baked in at build time (scripts/build_macos.sh selects it via
+// AUDIAL_ENV); users only ever enter a user id and API key. See docs/build-notes.md.
+#ifndef AUDIAL_API_BASE_URL
+#define AUDIAL_API_BASE_URL "https://api.audialmusic.ai"
+#endif
+
 struct AudialCredentials {
+  // Always kAudialApiBaseUrl in practice (see LoadSave::loadAudialCredentials()); kept as a
+  // field, rather than dropped, so AudialClient and tests can still construct credentials
+  // directly. Left empty, AudialClient substitutes kAudialApiBaseUrl.
   String base_url;
   String user_id;
   String api_key;
 
   bool complete() const {
-    return base_url.isNotEmpty() && user_id.isNotEmpty() && api_key.isNotEmpty();
+    return user_id.isNotEmpty() && api_key.isNotEmpty();
   }
 };
 
@@ -42,11 +51,21 @@ class AudialClient {
     // mid-transfer.
     static constexpr int kTimeoutMs = 15000;
 
-    explicit AudialClient(AudialCredentials credentials) : credentials_(std::move(credentials)) { }
+    // Baked in at build time; see the AUDIAL_API_BASE_URL macro above.
+    static constexpr const char* kAudialApiBaseUrl = AUDIAL_API_BASE_URL;
+
+    explicit AudialClient(AudialCredentials credentials) : credentials_(std::move(credentials)) {
+      if (credentials_.base_url.isEmpty())
+        credentials_.base_url = kAudialApiBaseUrl;
+    }
 
     // Optional cancellation flag, owned by the caller and polled while data is uploaded.
     // May be null, in which case nothing is cancellable and only kTimeoutMs applies.
     void setCancelFlag(std::atomic<bool>* flag) { cancel_flag_ = flag; }
+
+    // The base URL every request is actually composed against (kAudialApiBaseUrl when the
+    // credentials this client was built with left base_url empty). Exposed for tests.
+    const String& effectiveBaseUrl() const { return credentials_.base_url; }
 
     static String sanitizeFilename(const String& name);
     static String buildRunBody(const String& user_id, const String& filename, const String& file_url);

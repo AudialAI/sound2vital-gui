@@ -1317,10 +1317,12 @@ void LoadSave::saveWorkOffline(bool work_offline) {
   saveJsonToConfig(data);
 }
 
-void LoadSave::saveAudialCredentials(const std::string& base_url, const std::string& user_id,
-                                     const std::string& api_key) {
+void LoadSave::saveAudialCredentials(const std::string& user_id, const std::string& api_key) {
   json data = getConfigJson();
-  data["audial_base_url"] = base_url;
+  // Old configs may still carry a user-entered base URL; the base URL is baked in at build
+  // time now (AudialClient::kAudialApiBaseUrl), so drop any stored value rather than let it
+  // shadow the build's URL.
+  data.erase("audial_base_url");
   data["audial_user_id"] = user_id;
   data["audial_api_key"] = api_key;
   saveJsonToConfig(data);
@@ -1329,18 +1331,12 @@ void LoadSave::saveAudialCredentials(const std::string& base_url, const std::str
 AudialCredentials LoadSave::loadAudialCredentials() {
   json data = getConfigJson();
   AudialCredentials credentials;
-  credentials.base_url = "https://api.audialmusic.ai";
-  if (data.count("audial_base_url") && data["audial_base_url"].is_string()) {
-    std::string base_url = data["audial_base_url"];
-    if (!base_url.empty())
-      credentials.base_url = base_url;
-  }
+  // Always the build's baked-in URL; any stored "audial_base_url" (old configs) is ignored.
+  credentials.base_url = AudialClient::kAudialApiBaseUrl;
   if (data.count("audial_user_id") && data["audial_user_id"].is_string())
     credentials.user_id = String(data["audial_user_id"].get<std::string>());
   if (data.count("audial_api_key") && data["audial_api_key"].is_string())
     credentials.api_key = String(data["audial_api_key"].get<std::string>());
-  // Every request appends "/api/...", so a pasted "https://host/" would produce a double slash.
-  credentials.base_url = credentials.base_url.trimCharactersAtEnd("/");
   return credentials;
 }
 
