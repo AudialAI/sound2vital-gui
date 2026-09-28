@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="C9WuMW" name="AudialSynth" projectType="audioplug" version="1.0.6"
+<JUCERPROJECT id="C9WuMW" name="AudialSynth" projectType="audioplug" version="1.0.0"
               bundleIdentifier="ai.audialmusic.synth" includeBinaryInAppConfig="1"
               buildVST="1" buildVST3="1" buildAU="1" buildRTAS="0" buildAAX="0"
               pluginName="Audial Synth" pluginDesc="Audial Synth" pluginManufacturer="Audial"

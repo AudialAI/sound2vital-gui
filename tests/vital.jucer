@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="GfsdNK" name="AudialSynthTests" projectType="consoleapp" version="1.0.6"
+<JUCERPROJECT id="GfsdNK" name="AudialSynthTests" projectType="consoleapp" version="1.0.0"
               bundleIdentifier="ai.audialmusic.synth.tests" includeBinaryInAppConfig="1"
               companyName="Audial" companyWebsite="https://audialmusic.ai" companyEmail="support@audialmusic.ai"
               defines="" displaySplashScreen="0" reportAppUsage="0" splashScreenColour="Dark"
