@@ -12,7 +12,9 @@
 class ResynthSection : public Overlay, public FileDragAndDropTarget, public Timer {
   public:
     static constexpr int kPanelWidth = 560;
-    static constexpr int kPanelHeight = 460;
+    // 460 minus the removed base-URL row (kTextEditorHeight + 8 px gap = 38 px); the base URL
+    // is baked in at build time now (AudialClient::kAudialApiBaseUrl), not user-entered.
+    static constexpr int kPanelHeight = 422;
     static constexpr int kPaddingX = 24;
     static constexpr int kPaddingY = 20;
     static constexpr int kButtonHeight = 32;
@@ -81,7 +83,6 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     std::unique_ptr<PlainTextComponent> drop_text_;
     std::unique_ptr<PlainTextComponent> status_text_;
     std::unique_ptr<PlainTextComponent> credentials_text_;
-    std::unique_ptr<OpenGlTextEditor> base_url_;
     std::unique_ptr<OpenGlTextEditor> user_id_;
     std::unique_ptr<OpenGlTextEditor> api_key_;
     std::unique_ptr<OpenGlToggleButton> browse_button_;

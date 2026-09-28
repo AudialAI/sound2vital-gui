@@ -45,10 +45,9 @@ ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRou
   credentials_text_->setFontType(PlainTextComponent::kLight);
   addOpenGlComponent(credentials_text_.get());
 
-  base_url_ = std::make_unique<OpenGlTextEditor>("Base URL");
   user_id_ = std::make_unique<OpenGlTextEditor>("User ID");
   api_key_ = std::make_unique<OpenGlTextEditor>("API Key", L'*');
-  for (OpenGlTextEditor* editor : { base_url_.get(), user_id_.get(), api_key_.get() }) {
+  for (OpenGlTextEditor* editor : { user_id_.get(), api_key_.get() }) {
     editor->setMultiLine(false);
     addAndMakeVisible(editor);
     addOpenGlComponent(editor->getImageComponent());
@@ -142,10 +141,8 @@ void ResynthSection::resized() {
   int creds_y = status_y + 44;
   credentials_text_->setBounds(x, creds_y, text_width, 20);
   int field_y = creds_y + 26;
-  base_url_->setBounds(x, field_y, text_width, kTextEditorHeight);
-  user_id_->setBounds(x, field_y + kTextEditorHeight + 8, text_width / 2 - 6, kTextEditorHeight);
-  api_key_->setBounds(x + text_width / 2 + 6, field_y + kTextEditorHeight + 8, text_width / 2 - 6, kTextEditorHeight);
-  setTextColors(base_url_.get(), "https://api.audialmusic.ai");
+  user_id_->setBounds(x, field_y, text_width, kTextEditorHeight);
+  api_key_->setBounds(x, field_y + kTextEditorHeight + 8, text_width, kTextEditorHeight);
   setTextColors(user_id_.get(), "Audial user id");
   setTextColors(api_key_.get(), "Audial API key");
 
@@ -162,8 +159,6 @@ void ResynthSection::setVisible(bool should_be_visible) {
   Overlay::setVisible(should_be_visible);
   if (should_be_visible) {
     AudialCredentials credentials = LoadSave::loadAudialCredentials();
-    if (base_url_->getText().isEmpty())
-      base_url_->setText(credentials.base_url);
     if (user_id_->getText().isEmpty())
       user_id_->setText(credentials.user_id);
     if (api_key_->getText().isEmpty())
@@ -235,8 +230,7 @@ void ResynthSection::releaseChooser() {
 }
 
 void ResynthSection::saveCredentialsFromFields() {
-  LoadSave::saveAudialCredentials(base_url_->getText().trim().toStdString(),
-                                  user_id_->getText().trim().toStdString(),
+  LoadSave::saveAudialCredentials(user_id_->getText().trim().toStdString(),
                                   api_key_->getText().trim().toStdString());
   setState(state_, "Credentials saved");
 }
