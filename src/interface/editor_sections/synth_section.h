@@ -119,23 +119,16 @@ class AppLogo : public OpenGlImageComponent {
     void paint(Graphics& g) override {
       const DropShadow shadow(findColour(Skin::kShadow, true), 10.0f, Point<int>(0, 0));
 
+      // AUDIAL: the logo is the wave mark alone; the upstream ring is not drawn.
       logo_letter_.applyTransform(logo_letter_.getTransformToScaleToFit(getLocalBounds().toFloat(), true));
-      logo_ring_.applyTransform(logo_ring_.getTransformToScaleToFit(getLocalBounds().toFloat(), true));
 
       shadow.drawForPath(g, logo_letter_);
-      shadow.drawForPath(g, logo_ring_);
 
       Colour letter_top_color = findColour(Skin::kWidgetSecondary1, true);
       Colour letter_bottom_color = findColour(Skin::kWidgetSecondary2, true);
-      Colour ring_top_color = findColour(Skin::kWidgetPrimary1, true);
-      Colour ring_bottom_color = findColour(Skin::kWidgetPrimary2, true);
       ColourGradient letter_gradient(letter_top_color, 0.0f, 12.0f, letter_bottom_color, 0.0f, 96.0f, false);
-      ColourGradient ring_gradient(ring_top_color, 0.0f, 12.0f, ring_bottom_color, 0.0f, 96.0f, false);
       g.setGradientFill(letter_gradient);
       g.fillPath(logo_letter_);
-
-      g.setGradientFill(ring_gradient);
-      g.fillPath(logo_ring_);
     }
 
   private:

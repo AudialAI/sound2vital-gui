@@ -42,13 +42,11 @@ class LogoButton : public Button {
 
       Rectangle<float> bounds = getLocalBounds().toFloat();
       letter_.applyTransform(letter_.getTransformToScaleToFit(bounds, true));
-      ring_.applyTransform(ring_.getTransformToScaleToFit(bounds, true));
 
       shadow_ = Image(Image::SingleChannel, getWidth(), getHeight(), true);
 
       Graphics shadow_g(shadow_);
       shadow.drawForPath(shadow_g, letter_);
-      shadow.drawForPath(shadow_g, ring_);
 
       redoImage();
     }
@@ -56,18 +54,14 @@ class LogoButton : public Button {
     void paintButton(Graphics& g, bool hover, bool down) override {
       Rectangle<float> bounds = getLocalBounds().toFloat();
       letter_.applyTransform(letter_.getTransformToScaleToFit(bounds, true));
-      ring_.applyTransform(ring_.getTransformToScaleToFit(bounds, true));
 
       g.setColour(findColour(Skin::kShadow, true));
       g.drawImageAt(shadow_, 0, 0, true);
 
+      // AUDIAL: the logo is the wave mark alone; the upstream ring is not drawn.
       ColourGradient letter_gradient(letter_top_color_, 0.0f, 0.0f, letter_bottom_color_, 0.0f, getHeight(), false);
-      ColourGradient ring_gradient(ring_top_color_, 0.0f, 0.0f, ring_bottom_color_, 0.0f, getHeight(), false);
       g.setGradientFill(letter_gradient);
       g.fillPath(letter_);
-
-      g.setGradientFill(ring_gradient);
-      g.fillPath(ring_);
 
       if (hover) {
         g.setColour(findColour(Skin::kLightenScreen, true));
