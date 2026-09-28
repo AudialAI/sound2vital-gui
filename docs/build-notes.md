@@ -584,3 +584,38 @@ drag. During the drag, placeholder names built from the promised UTIs are offere
 `$TMPDIR/AudialSynth-drops/<stamp>/` and delivered through `handleDragDrop` once written.
 Re-apply it if JUCE is ever upgraded. `FullInterface` is also a `FileDragAndDropTarget`
 so a drop anywhere on the synth opens the Resynth panel.
+
+## AUDIAL_ENV: the API base URL is baked in at build time (2026-09-16)
+
+Users only ever enter an Audial user id and API key; the API base URL is no longer a text
+field (`resynth_section.cpp` dropped that editor) or a stored config value
+(`LoadSave::loadAudialCredentials()` ignores and deletes any stale `audial_base_url` key from
+older configs). It comes from `AudialClient::kAudialApiBaseUrl`
+(`src/common/audial_client.h`), which is `AUDIAL_API_BASE_URL` if that macro was defined at
+compile time, else `https://api.audialmusic.ai`.
+
+`scripts/build_macos.sh`, `scripts/run_tests_macos.sh` and `scripts/package_macos.sh` read the
+`AUDIAL_ENV` environment variable (default `prod`) and select the macro accordingly:
+
+| `AUDIAL_ENV` | Baked-in `AUDIAL_API_BASE_URL`                    | Use                                   |
+|--------------|----------------------------------------------------|----------------------------------------|
+| `prod`       | (unset; header default `https://api.audialmusic.ai`) | default, what gets shipped           |
+| `dev`        | `https://starfish-app-2x28e.ondigitalocean.app`     | staging API                            |
+| `mock`       | `http://localhost:8766`                             | `tools/mock_audial_api.py`, see docs/manual-checklist.md |
+
+Example: `AUDIAL_ENV=dev bash scripts/build_macos.sh Release AudialSynth`. The macro is passed
+through `GCC_PREPROCESSOR_DEFINITIONS`, e.g. (`dev`):
+
+```
+GCC_PREPROCESSOR_DEFINITIONS=$(inherited) NO_AUTH=1 JUCE_VST3_CAN_REPLACE_VST2=0 AUDIAL_API_BASE_URL=\"https://starfish-app-2x28e.ondigitalocean.app\"
+```
+
+The backslash-escaped quotes are required: `GCC_PREPROCESSOR_DEFINITIONS` is a
+space-separated list of `-D` macros, and a string-valued macro needs its own quoting to
+survive being turned into `-DAUDIAL_API_BASE_URL="https://..."` on the clang command line.
+`scripts/package_macos.sh` forwards `AUDIAL_ENV` to `scripts/build_macos.sh` and names the zip
+`AudialSynth-macOS-<sha>-<env>.zip` for anything but `prod` (which keeps the plain
+`AudialSynth-macOS-<sha>.zip` name it always had).
+
+`scripts/build_linux_vst3.sh` / `docker/Dockerfile.linux-vst3` need no `AUDIAL_ENV` handling:
+the Linux VST3 build is the render-engine side and never talks to the Audial API.

@@ -16,8 +16,9 @@ belonging to it. The upstream copyright notices are kept in every file that carr
 The RESYNTH button in the header opens a panel where you drop a one-shot sample of up to 20
 seconds. The sample is uploaded to the Audial API, which analyses it and returns a patch; the patch
 is saved under your user preset folder and loaded into the synth, where every oscillator, envelope
-and effect stays editable like any other preset. The panel holds your Audial base URL, user id and
-API key; nothing is sent anywhere until you drop a file.
+and effect stays editable like any other preset. The panel holds your Audial user id and API key
+(the API base URL is baked into the build, not user-entered); nothing is sent anywhere until you
+drop a file.
 
 ## Building
 
@@ -31,6 +32,9 @@ Builds with Xcode into `plugin/builds/osx/build/Release/` (`AudialSynth.vst3`,
 `AudialSynth.component`) and `standalone/builds/osx/build/Release/AudialSynth.app`. The products are
 ad-hoc signed, so no developer certificate is needed, and macOS will ask you to approve the app and
 the plug-ins the first time.
+
+The Audial API base URL is baked in at build time via `AUDIAL_ENV` (default `prod`; see
+`docs/build-notes.md`), e.g. `AUDIAL_ENV=dev scripts/build_macos.sh` for the staging API.
 
 ### Linux VST3
 

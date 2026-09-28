@@ -3,9 +3,12 @@
 # Manual checklist (run after every GUI change)
 
 Start the mock: `python3 tools/mock_audial_api.py --preset <any engine preset.vital> --delay 6`
-Open `standalone/builds/osx/build/Release/AudialSynth.app`, click RESYNTH.
+Build against it with `AUDIAL_ENV=mock bash scripts/build_macos.sh` (bakes in
+`http://localhost:8766`; see docs/build-notes.md's AUDIAL_ENV section for the other values,
+`dev` and `prod`). Open `standalone/builds/osx/build/Release/AudialSynth.app`, click RESYNTH.
 
-1. Credentials: base URL `http://localhost:8766`, user `u1`, key `k1`, Save. Quit and reopen: fields are restored.
+1. Credentials: the panel only asks for user id and API key now (the base URL is baked in at
+   build time). Enter user `u1`, key `k1`, Save. Quit and reopen: fields are restored.
 2. Drop a 21 s wav: status "Sample is 21.0 s; the limit is 20 s"; nothing is sent (mock log empty).
 3. Drop a 3 s wav: status goes Uploading → Submitting → Processing... N s → Downloading; the panel closes and the header preset name is the new `<sample>_<stamp>` file; sound plays from the keyboard; the preset browser lists it under User/Resynth.
 4. Restart the mock with `--fail`, drop the 3 s wav: status shows "Input is 25.0 s; the limit is 20 s" and the panel stays open.
