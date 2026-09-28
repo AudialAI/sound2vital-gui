@@ -87,6 +87,21 @@ class AudialClientTest : public UnitTest {
       expect(creds.complete());
       creds.api_key = "";
       expect(!creds.complete());
+      // base_url plays no part in completeness: the URL is baked in at build time now.
+      AudialCredentials no_base_url { "", "u1", "k" };
+      expect(no_base_url.complete());
+
+      beginTest("baked-in base URL");
+      expect(String(AudialClient::kAudialApiBaseUrl).isNotEmpty());
+      expect(String(AudialClient::kAudialApiBaseUrl).startsWith("https://"));
+
+      beginTest("a client built with an empty base_url composes URLs from kAudialApiBaseUrl");
+      AudialClient client(AudialCredentials { "", "u1", "k" });
+      expectEquals(client.effectiveBaseUrl(), String(AudialClient::kAudialApiBaseUrl));
+
+      beginTest("a client built with an explicit base_url keeps it");
+      AudialClient explicit_client(AudialCredentials { "https://example.test", "u1", "k" });
+      expectEquals(explicit_client.effectiveBaseUrl(), String("https://example.test"));
     }
 };
 
