@@ -10,7 +10,8 @@
 ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRoundedRectangleFragment),
                                               drop_zone_(Shaders::kRoundedRectangleFragment),
                                               progress_track_(Shaders::kRoundedRectangleFragment),
-                                              progress_fill_(Shaders::kRoundedRectangleFragment), job_(this) {
+                                              progress_fill_(Shaders::kRoundedRectangleFragment), job_(this),
+                                              sign_in_job_(this) {
   format_manager_.registerBasicFormats();
   addOpenGlComponent(&body_);
   addOpenGlComponent(&drop_zone_);
@@ -40,7 +41,8 @@ ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRou
   status_text_->setFontType(PlainTextComponent::kLight);
   addOpenGlComponent(status_text_.get());
 
-  credentials_text_ = std::make_unique<PlainTextComponent>("credentials", "Audial API credentials");
+  credentials_text_ = std::make_unique<PlainTextComponent>("credentials", "Not signed in to Audial");
+  credentials_text_->setJustification(Justification::centredLeft);
   credentials_text_->setTextSize(13.0f);
   credentials_text_->setFontType(PlainTextComponent::kLight);
   addOpenGlComponent(credentials_text_.get());
@@ -54,14 +56,17 @@ ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRou
   }
 
   browse_button_ = std::make_unique<OpenGlToggleButton>(TRANS("Browse"));
-  save_button_ = std::make_unique<OpenGlToggleButton>(TRANS("Save credentials"));
+  save_button_ = std::make_unique<OpenGlToggleButton>(TRANS("Save API key"));
+  account_button_ = std::make_unique<OpenGlToggleButton>(TRANS("Sign in with Audial"));
   cancel_button_ = std::make_unique<OpenGlToggleButton>(TRANS("Cancel"));
   close_button_ = std::make_unique<OpenGlToggleButton>(TRANS("Close"));
   browse_button_->setUiButton(true);
   save_button_->setUiButton(false);
+  account_button_->setUiButton(true);
   cancel_button_->setUiButton(false);
   close_button_->setUiButton(false);
-  for (OpenGlToggleButton* button : { browse_button_.get(), save_button_.get(), cancel_button_.get(), close_button_.get() }) {
+  for (OpenGlToggleButton* button : { browse_button_.get(), save_button_.get(), account_button_.get(),
+                                      cancel_button_.get(), close_button_.get() }) {
     button->addListener(this);
     addAndMakeVisible(button);
     addOpenGlComponent(button->getGlComponent());
@@ -79,6 +84,10 @@ ResynthSection::~ResynthSection() {
   job_.signalThreadShouldExit();
   job_.notify();
   job_.stopThread(AudialClient::kTimeoutMs + 2000);
+  // Same for a sign-in still waiting for the browser: it is normally parked in wait().
+  sign_in_job_.signalThreadShouldExit();
+  sign_in_job_.notify();
+  sign_in_job_.stopThread(AudialDeviceLogin::kTimeoutMs + 2000);
 }
 
 Rectangle<int> ResynthSection::getPanelRect() {
@@ -138,13 +147,17 @@ void ResynthSection::resized() {
   progress_track_.setColor(findColour(Skin::kBody, true).overlaidWith(findColour(Skin::kLightenScreen, true)));
   progress_fill_.setColor(findColour(Skin::kWidgetPrimary1, true));
 
-  int creds_y = status_y + 44;
-  credentials_text_->setBounds(x, creds_y, text_width, 20);
-  int field_y = creds_y + 26;
+  // Account row: who is signed in on the left, Sign in / Sign out on the right. The API key
+  // fields below it are the fallback and only show while nobody is signed in.
+  int creds_y = status_y + 40;
+  int account_button_width = 170;
+  credentials_text_->setBounds(x, creds_y, text_width - account_button_width - 12, kButtonHeight);
+  account_button_->setBounds(x + text_width - account_button_width, creds_y, account_button_width, kButtonHeight);
+  int field_y = creds_y + kButtonHeight + 8;
   user_id_->setBounds(x, field_y, text_width, kTextEditorHeight);
   api_key_->setBounds(x, field_y + kTextEditorHeight + 8, text_width, kTextEditorHeight);
-  setTextColors(user_id_.get(), "Audial user id");
-  setTextColors(api_key_.get(), "Audial API key");
+  setTextColors(user_id_.get(), "or enter an Audial user id");
+  setTextColors(api_key_.get(), "and API key");
 
   int buttons_y = panel.getBottom() - kPaddingY - kButtonHeight;
   int button_width = 140;
@@ -163,6 +176,9 @@ void ResynthSection::setVisible(bool should_be_visible) {
       user_id_->setText(credentials.user_id);
     if (api_key_->getText().isEmpty())
       api_key_->setText(credentials.api_key);
+    // Another Audial client may have signed in or out since this panel was last open.
+    if (!sign_in_job_.isThreadRunning())
+      refreshAccount();
     if (state_ == State::kDone || state_ == State::kError)
       setState(State::kIdle, "");
     Image image(Image::ARGB, 1, 1, false);
@@ -178,6 +194,12 @@ void ResynthSection::buttonClicked(Button* clicked_button) {
     browseForSample();
   else if (clicked_button == save_button_.get())
     saveCredentialsFromFields();
+  else if (clicked_button == account_button_.get()) {
+    if (AudialSignIn::load(AudialClient::kAudialApiBaseUrl).valid())
+      signOut();
+    else
+      startSignIn();
+  }
   else if (clicked_button == cancel_button_.get())
     cancelJob();
   else if (clicked_button == close_button_.get())
@@ -232,7 +254,98 @@ void ResynthSection::releaseChooser() {
 void ResynthSection::saveCredentialsFromFields() {
   LoadSave::saveAudialCredentials(user_id_->getText().trim().toStdString(),
                                   api_key_->getText().trim().toStdString());
-  setState(state_, "Credentials saved");
+  setState(state_, "API key saved");
+}
+
+AudialCredentials ResynthSection::credentialsInUse() {
+  return AudialSignIn::inUse(LoadSave::loadAudialCredentials());
+}
+
+void ResynthSection::refreshAccount(const String& message) {
+  AudialSignIn sign_in = AudialSignIn::load(AudialClient::kAudialApiBaseUrl);
+  bool signed_in = sign_in.valid();
+  bool waiting = sign_in_job_.isThreadRunning();
+
+  if (message.isNotEmpty())
+    credentials_text_->setText(message);
+  else if (signed_in)
+    credentials_text_->setText("Signed in as " + (sign_in.email.isNotEmpty() ? sign_in.email : String("your Audial account")));
+  else
+    credentials_text_->setText("Not signed in to Audial");
+
+  account_button_->setText(signed_in ? TRANS("Sign out") : TRANS("Sign in with Audial"));
+  account_button_->setEnabled(signed_in || !waiting);
+  // An API key is only used while nobody is signed in, so only offered then.
+  user_id_->setVisible(!signed_in);
+  api_key_->setVisible(!signed_in);
+  save_button_->setVisible(!signed_in);
+  repaint();
+}
+
+void ResynthSection::postAccount(const String& message) {
+  Component::SafePointer<ResynthSection> safe(this);
+  MessageManager::callAsync([safe, message] {
+    if (safe != nullptr)
+      safe.getComponent()->refreshAccount(message);
+  });
+}
+
+void ResynthSection::startSignIn() {
+  if (sign_in_job_.isThreadRunning())
+    return;
+  sign_in_job_.startThread();
+  refreshAccount("Opening your browser...");
+}
+
+void ResynthSection::signOut() {
+  AudialSignIn sign_in = AudialSignIn::load(AudialClient::kAudialApiBaseUrl);
+  AudialSignIn::clear();
+  if (sign_in.valid()) {
+    // Disconnects this computer on the server too. Off the message thread: signing out must
+    // not wait for the network.
+    String api_key = sign_in.api_key;
+    Thread::launch([api_key] { AudialDeviceLogin::revoke(AudialClient::kAudialApiBaseUrl, api_key); });
+  }
+  refreshAccount();
+}
+
+void ResynthSection::runSignIn() {
+  String base_url = AudialClient::kAudialApiBaseUrl;
+  AudialDeviceLogin::Pending pending = AudialDeviceLogin::start(base_url, "audial-synth");
+  if (sign_in_job_.threadShouldExit())
+    return;
+  if (!pending.ok()) {
+    postAccount("Could not reach Audial. Check your connection");
+    return;
+  }
+
+  String url = pending.verification_url;
+  MessageManager::callAsync([url] { URL(url).launchInDefaultBrowser(); });
+  postAccount("Approve in your browser. Code: " + pending.user_code);
+
+  uint32 started = Time::getMillisecondCounter();
+  while (Time::getMillisecondCounter() - started < (uint32)pending.expires_in_seconds * 1000) {
+    sign_in_job_.wait(pending.interval_seconds * 1000);
+    if (sign_in_job_.threadShouldExit())
+      return;
+    AudialDeviceLogin::PollResult result = AudialDeviceLogin::poll(base_url, pending.device_code);
+    if (result.state == AudialDeviceLogin::State::kPending)
+      continue;
+    if (result.state == AudialDeviceLogin::State::kApproved) {
+      if (result.sign_in.save(base_url))
+        postAccount(String());
+      else
+        postAccount("Signed in, but it could not be saved on this computer");
+    }
+    else if (result.state == AudialDeviceLogin::State::kDenied)
+      postAccount("Sign-in was cancelled in the browser");
+    else if (result.state == AudialDeviceLogin::State::kExpired)
+      postAccount("The sign-in expired. Try again");
+    else
+      postAccount("Sign-in failed. Try again");
+    return;
+  }
+  postAccount("The sign-in expired. Try again");
 }
 
 double ResynthSection::estimateJobSeconds(double sample_seconds) {
@@ -276,9 +389,10 @@ void ResynthSection::startJob(const File& sample) {
     setState(State::kError, reason);
     return;
   }
-  saveCredentialsFromFields();
-  if (!LoadSave::loadAudialCredentials().complete()) {
-    setState(State::kError, "Enter your Audial user id and API key first");
+  if (!credentialsInUse().complete())
+    saveCredentialsFromFields();  // an API key typed into the fields but not saved yet
+  if (!credentialsInUse().complete()) {
+    setState(State::kError, "Sign in with Audial first");
     return;
   }
   sample_ = sample;
@@ -326,7 +440,7 @@ void ResynthSection::postState(State state, const String& message) {
 }
 
 void ResynthSection::runJob() {
-  AudialClient client(LoadSave::loadAudialCredentials());
+  AudialClient client(credentialsInUse());
   client.setCancelFlag(&cancel_requested_);
   String exe_id = Uuid().toDashedString();
   String filename = AudialClient::sanitizeFilename(sample_.getFileName());

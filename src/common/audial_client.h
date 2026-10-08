@@ -7,7 +7,8 @@
 #include <atomic>
 
 // The API base URL is baked in at build time (scripts/build_macos.sh selects it via
-// AUDIAL_ENV); users only ever enter a user id and API key. See docs/build-notes.md.
+// AUDIAL_ENV); users sign in through their browser (AudialDeviceLogin below) or, failing
+// that, enter a user id and API key. See docs/build-notes.md.
 #ifndef AUDIAL_API_BASE_URL
 #define AUDIAL_API_BASE_URL "https://api.audialmusic.ai"
 #endif
@@ -23,6 +24,83 @@ struct AudialCredentials {
   bool complete() const {
     return user_id.isNotEmpty() && api_key.isNotEmpty();
   }
+};
+
+// The Audial sign-in for this computer.
+//
+// Signing in from any Audial client (this synth, the text2vox plugin, the `audial` command
+// line, the Audial MCP server) writes one file that all of them read:
+//
+//   macOS / Linux   ~/.audial/credentials.json
+//   Windows         %APPDATA%\Audial\credentials.json
+//
+//   { "api_key", "user_id", "email", "key_name", "api_base_url" }
+//
+// "api_base_url" is the API the key was issued by ("<base>/api"). A sign-in is only used
+// with that API, so a dev or mock build never sends its key to production or vice versa.
+struct AudialSignIn {
+  String api_key;
+  String user_id;
+  String email;
+  String key_name;
+
+  bool valid() const {
+    return api_key.isNotEmpty() && user_id.isNotEmpty();
+  }
+
+  static File defaultFile();
+  // The saved sign-in for base_url, or an empty value when there is none or it belongs to
+  // another API.
+  static AudialSignIn load(const String& base_url, const File& file = defaultFile());
+  // Writes the sign-in, readable only by the current user.
+  bool save(const String& base_url, const File& file = defaultFile()) const;
+  static void clear(const File& file = defaultFile());
+
+  // What requests are made with: the sign-in when there is one, otherwise the user id and
+  // API key typed into the Resynth panel.
+  static AudialCredentials inUse(const AudialCredentials& typed, const File& file = defaultFile());
+};
+
+// "Sign in with Audial": the OAuth device authorization flow.
+//
+//   POST {base}/api/auth/device/code   { client_name, device_name }
+//        -> { device_code, user_code, verification_uri_complete, interval, expires_in }
+//   (the user opens verification_uri_complete in their browser and approves)
+//   POST {base}/api/auth/device/token  { device_code }      polled every `interval` s
+//        -> 200 { api_key, user_id, email, key_name }
+//        -> 400 { error: authorization_pending | slow_down | access_denied | expired_token }
+//
+// The network calls block; use them from a background thread.
+struct AudialDeviceLogin {
+  struct Pending {
+    String device_code;
+    String user_code;         // shown in the panel and on the approval page
+    String verification_url;  // opens the approval page with the code filled in
+    int expires_in_seconds = 600;
+    int interval_seconds = 5;
+
+    bool ok() const {
+      return device_code.isNotEmpty() && verification_url.isNotEmpty();
+    }
+  };
+
+  enum class State { kPending, kApproved, kDenied, kExpired, kFailed };
+
+  struct PollResult {
+    State state = State::kFailed;
+    AudialSignIn sign_in;  // filled in when state == kApproved
+  };
+
+  static constexpr int kTimeoutMs = 10000;
+
+  static Pending parseStart(int status, const String& body);
+  static PollResult parsePoll(int status, const String& body);
+
+  static Pending start(const String& base_url, const String& client_name);
+  static PollResult poll(const String& base_url, const String& device_code);
+  // Signing out: asks the API to revoke api_key. Best effort.
+  static void revoke(const String& base_url, const String& api_key);
+  static String deviceName();
 };
 
 struct HttpResult {

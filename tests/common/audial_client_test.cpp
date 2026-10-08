@@ -41,7 +41,7 @@ class AudialClientTest : public UnitTest {
       HttpResult unauthorized;
       unauthorized.status = 403;
       unauthorized.body = "Unauthorized";
-      expectEquals(unauthorized.describe(), String("HTTP 403: Unauthorized"));
+      expect(unauthorized.describe().contains("Sign in again"));
       HttpResult empty_error;
       empty_error.status = 500;
       empty_error.body = "{\"error\":\"\"}";
@@ -98,6 +98,54 @@ class AudialClientTest : public UnitTest {
       beginTest("a client built with an empty base_url composes URLs from kAudialApiBaseUrl");
       AudialClient client(AudialCredentials { "", "u1", "k" });
       expectEquals(client.effectiveBaseUrl(), String(AudialClient::kAudialApiBaseUrl));
+
+      beginTest("device sign-in: start response");
+      AudialDeviceLogin::Pending pending = AudialDeviceLogin::parseStart(200,
+          "{\"device_code\":\"dc\",\"user_code\":\"BCDF-GHJK\","
+          "\"verification_uri_complete\":\"https://audialmusic.ai/activate?code=BCDF-GHJK\","
+          "\"expires_in\":600,\"interval\":5}");
+      expect(pending.ok());
+      expectEquals(pending.user_code, String("BCDF-GHJK"));
+      expectEquals(pending.interval_seconds, 5);
+      expectEquals(pending.expires_in_seconds, 600);
+      expect(!AudialDeviceLogin::parseStart(500, "oops").ok());
+      expectEquals(AudialDeviceLogin::parseStart(200,
+          "{\"device_code\":\"d\",\"verification_uri_complete\":\"u\",\"interval\":0}").interval_seconds, 1);
+
+      beginTest("device sign-in: poll responses");
+      expect(AudialDeviceLogin::parsePoll(400, "{\"error\":\"authorization_pending\"}").state ==
+             AudialDeviceLogin::State::kPending);
+      expect(AudialDeviceLogin::parsePoll(400, "{\"error\":\"slow_down\"}").state == AudialDeviceLogin::State::kPending);
+      expect(AudialDeviceLogin::parsePoll(400, "{\"error\":\"access_denied\"}").state == AudialDeviceLogin::State::kDenied);
+      expect(AudialDeviceLogin::parsePoll(400, "{\"error\":\"expired_token\"}").state == AudialDeviceLogin::State::kExpired);
+      expect(AudialDeviceLogin::parsePoll(502, "bad gateway").state == AudialDeviceLogin::State::kFailed);
+      AudialDeviceLogin::PollResult approved = AudialDeviceLogin::parsePoll(200,
+          "{\"api_key\":\"aud_k\",\"user_id\":\"u1\",\"email\":\"a@b.c\",\"key_name\":\"Audial Synth on Mac\"}");
+      expect(approved.state == AudialDeviceLogin::State::kApproved);
+      expectEquals(approved.sign_in.user_id, String("u1"));
+      expect(AudialDeviceLogin::parsePoll(200, "{\"api_key\":\"aud_k\"}").state == AudialDeviceLogin::State::kFailed);
+
+      beginTest("the sign-in file is shared with the other Audial clients and tied to one API");
+      // A temporary file, never the real ~/.audial/credentials.json.
+      File sign_in_file = File::getSpecialLocation(File::tempDirectory).getChildFile("audialsynth_sign_in_test.json");
+      sign_in_file.deleteFile();
+      expect(!AudialSignIn::load("https://api.audialmusic.ai", sign_in_file).valid());
+      expect(approved.sign_in.save("https://api.audialmusic.ai/", sign_in_file));
+      AudialSignIn loaded = AudialSignIn::load("https://api.audialmusic.ai", sign_in_file);
+      expect(loaded.valid());
+      expectEquals(loaded.api_key, String("aud_k"));
+      expectEquals(loaded.email, String("a@b.c"));
+      expect(sign_in_file.loadFileAsString().contains("\"api_base_url\": \"https://api.audialmusic.ai/api\""));
+      expect(!AudialSignIn::load("http://localhost:3000", sign_in_file).valid());
+
+      beginTest("a sign-in is used in place of a typed API key; without one the typed key is used");
+      AudialCredentials typed { "https://api.audialmusic.ai", "typed-user", "typed-key" };
+      AudialCredentials in_use = AudialSignIn::inUse(typed, sign_in_file);
+      expectEquals(in_use.user_id, String("u1"));
+      expectEquals(in_use.api_key, String("aud_k"));
+      AudialSignIn::clear(sign_in_file);
+      expect(!sign_in_file.existsAsFile());
+      expectEquals(AudialSignIn::inUse(typed, sign_in_file).api_key, String("typed-key"));
 
       beginTest("a client built with an explicit base_url keeps it");
       AudialClient explicit_client(AudialCredentials { "https://example.test", "u1", "k" });

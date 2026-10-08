@@ -44,6 +44,15 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
         ResynthSection* section_;
     };
 
+    // Runs "Sign in with Audial": opens the browser and waits for the user to approve.
+    class SignInJob : public Thread {
+      public:
+        SignInJob(ResynthSection* section) : Thread("Audial Sign-In"), section_(section) { }
+        void run() override { section_->runSignIn(); }
+      private:
+        ResynthSection* section_;
+    };
+
     ResynthSection(String name);
     virtual ~ResynthSection();
 
@@ -61,6 +70,7 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     void startJob(const File& sample);
     void cancelJob();
     void runJob();
+    void runSignIn();
 
   private:
     Rectangle<int> getPanelRect();
@@ -71,6 +81,13 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     void postState(State state, const String& message);
     void loadPreset(const File& preset);
     void saveCredentialsFromFields();
+    AudialCredentials credentialsInUse();
+    void startSignIn();
+    void signOut();
+    // Shows who is signed in and the controls that go with it. A non-empty message (sign-in
+    // progress or its outcome) is shown in place of the account line.
+    void refreshAccount(const String& message = String());
+    void postAccount(const String& message);
     void setTextColors(OpenGlTextEditor* editor, const String& empty_text);
     bool sampleIsAcceptable(const File& sample, String& reason, double& seconds);
 
@@ -87,12 +104,14 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     std::unique_ptr<OpenGlTextEditor> api_key_;
     std::unique_ptr<OpenGlToggleButton> browse_button_;
     std::unique_ptr<OpenGlToggleButton> save_button_;
+    std::unique_ptr<OpenGlToggleButton> account_button_;
     std::unique_ptr<OpenGlToggleButton> cancel_button_;
     std::unique_ptr<OpenGlToggleButton> close_button_;
 
     AudioFormatManager format_manager_;
     std::unique_ptr<FileChooser> chooser_;
     Job job_;
+    SignInJob sign_in_job_;
     File sample_;
     double sample_seconds_ = 0.0;
     double estimate_seconds_ = 0.0;
