@@ -1,8 +1,9 @@
 # Audial Synth
 
-Audial Synth is a polyphonic wavetable synthesizer: spectral warping oscillators, a wavetable
-editor, a modulation matrix with real-time graphical feedback, and a full effects chain. It builds
-as a VST3, an Audio Unit, an LV2 and a standalone application.
+[Audial Synth](https://audialmusic.ai) is a polyphonic wavetable synthesizer: spectral warping
+oscillators, a wavetable editor, a modulation matrix with real-time graphical feedback, and a
+full effects chain. It builds as a VST3, an Audio Unit, an LV2 and a standalone application.
+Download prebuilt binaries from [audialmusic.ai/downloads](https://audialmusic.ai/downloads).
 
 It is a GPLv3 fork of the synthesizer written by Matt Tytel, whose source is at
 [github.com/mtytel/vital](https://github.com/mtytel/vital). Audial Synth is not affiliated with or
@@ -80,3 +81,7 @@ Audial Synth is licensed under the GNU General Public License v3 or later; see `
 distribute a binary you must make the corresponding source available under the same licence.
 Presets, wavetables and other content distributed by the upstream project are under separate
 licences and are not redistributed here.
+
+---
+
+Powered by [Audial](https://audialmusic.ai).
