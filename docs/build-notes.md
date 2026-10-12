@@ -619,3 +619,100 @@ survive being turned into `-DAUDIAL_API_BASE_URL="https://..."` on the clang com
 
 `scripts/build_linux_vst3.sh` / `docker/Dockerfile.linux-vst3` need no `AUDIAL_ENV` handling:
 the Linux VST3 build is the render-engine side and never talks to the Audial API.
+
+## The Windows build runs in CI (2026-10-12)
+
+There is no local Windows machine, so `.github/workflows/windows-build.yml` *is* the Windows
+build box. It runs on every push and on demand, and is the only way the Windows x64 binaries are
+produced.
+
+It runs on `windows-2022`, pinned deliberately: `windows-latest` has moved to the Windows Server
+2025 + Visual Studio 2026 image, which no longer carries the `v143` toolset these projects are
+configured for. When that image retires, bump the label and re-validate against the newer MSVC.
+
+The build uses the hand-maintained Visual Studio exporters rather than CMake, matching how the
+macOS build uses the checked-in Xcode projects:
+
+- `plugin/builds/vs19/AudialSynth_SharedCode.vcxproj` then `AudialSynth_VST3.vcxproj`
+- `standalone/builds/vs19/AudialSynth_App.vcxproj`
+
+each built `Release|x64` with `/p:PlatformToolset=v143`. `SolutionDir` is passed as an msbuild
+property per step, because the generated projects use it for `OutDir`, `IntDir` and the Shared
+Code library path, and msbuild only sets it automatically when building a `.sln` rather than a
+single `.vcxproj`. These projects are configured with `NO_AUTH=1` and without the firebase, IPP
+and curl libraries upstream links, so no extra SDKs are needed on the runner.
+
+Packaging mirrors `scripts/package_macos.sh`: `dist/AudialSynth-Windows/` gets the
+`AudialSynth.vst3` bundle folder (the module goes in `Contents\x86_64-win\`, since JUCE links a
+flat module on Windows), `AudialSynth.exe`, `LICENSE`, a `SOURCE.txt` pointing at the exact commit
+as GPLv3 requires, and a Windows `README.txt`. That folder is zipped to
+`dist/AudialSynth-Windows.zip` with an `AudialSynth-Windows.zip.sha256` in the same
+`shasum -a 256` format as the macOS asset, and both are uploaded as the `AudialSynth-Windows`
+workflow artifact.
+
+### Re-running it for a tag
+
+```bash
+gh workflow run windows-build.yml --repo AudialAI/sound2vital-gui --ref main -f release_tag=v1.0.0
+gh run watch "$(gh run list --repo AudialAI/sound2vital-gui --workflow windows-build.yml \
+  --limit 1 --json databaseId -q '.[0].databaseId')" --repo AudialAI/sound2vital-gui --exit-status
+gh release view v1.0.0 --repo AudialAI/sound2vital-gui --json assets
+```
+
+With `release_tag` set to an existing tag, the last step uploads the zip and the `.sha256` to that
+release with `gh release upload --clobber`. The release lives in this same repo, so the built-in
+`GITHUB_TOKEN` plus `permissions: contents: write` is enough - no extra secret. Leave
+`release_tag` empty to only keep the artifacts.
+
+### Two pluginval tests are scoped out, and why
+
+The VST3 is validated with `pluginval --strictness-level 5`, but with two narrowing flags. Neither
+hides a Windows problem; both were confirmed against the shipped macOS VST3 with the same
+pluginval 1.0.4.
+
+`--skip-gui-tests`: the editor asks for an OpenGL 3.2 context
+(`FullInterface::setOpenGLVersionRequired` then `attachTo`). GitHub's headless Windows runners have
+no GPU and expose only Microsoft's software OpenGL 1.1 rasterizer, so the context never becomes
+current and pluginval's "Editor" test hangs until its 30s timeout instead of failing fast. The
+editor is covered by the macOS build and by running the standalone.
+
+`--disabled-tests "Basic bus"`: the "Restoring default layout" subsection of that group fails
+with "Unable to restore default layout". `SynthPlugin` uses the bare `AudioProcessor()` constructor
+with no `BusesProperties` and no `isBusesLayoutSupported` override, so the layout pluginval captures
+as the default has the main output bus disabled (the test logs 0 in / 0 out), and the closing
+`setBusesLayout()` of that captured layout returns `false`. This is upstream behaviour, not a
+regression: running pluginval locally against `plugin/builds/osx/build/Release/AudialSynth.vst3`
+fails exactly this one test too, and passes with `SUCCESS` once it is disabled. Giving the
+processor a real declared stereo output bus would change how it negotiates channels with every
+host, which is not a change worth making to turn CI green.
+
+Everything else stays fatal at strictness 5: scan, cold and warm open, plugin info, programs,
+parameters, audio processing across 3 sample rates x 5 block sizes, plugin state save/restore,
+automation, automatable parameters, and the bus enable/disable tests.
+
+To reproduce either locally on macOS:
+
+```bash
+curl -sLO https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_macOS.zip
+unzip -oq pluginval_macOS.zip
+./pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --skip-gui-tests \
+  --disabled-tests "Basic bus" \
+  --validate plugin/builds/osx/build/Release/AudialSynth.vst3
+```
+
+Drop the `--disabled-tests` flag to watch it fail the one test, and drop `--skip-gui-tests` too if
+you want the editor exercised (which works locally, where there is a real GPU).
+
+One trap worth knowing: `--disabled-tests` takes the test names inline, comma separated. It only
+treats the argument as a file of names when that argument is an **absolute** path
+(`getDisabledTests` in pluginval's `CommandLine.cpp`); given a relative path it silently tokenises
+the path itself as a test name, matches nothing, and disables nothing without warning. Inline names
+are also what survives pluginval relaunching itself as a child process, because that relaunch
+re-serialises the names as a comma-joined list rather than as a path.
+
+### The exporter rename did not disturb the macOS build
+
+The `vs19` projects were renamed and reconfigured from upstream's `Vial_*` targets to
+`AudialSynth_*`. The Xcode projects are separate files, so `scripts/build_macos.sh Release
+AudialSynth` was re-run afterwards to confirm: three `** BUILD SUCCEEDED **`, producing
+`AudialSynth.vst3`, `AudialSynth.component`, `libAudialSynth.a` and `AudialSynth.app`.
