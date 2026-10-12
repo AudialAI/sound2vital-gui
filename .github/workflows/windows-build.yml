@@ -130,8 +130,17 @@ jobs:
           Invoke-WebRequest -Uri 'https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip' -OutFile pluginval.zip
           Expand-Archive -LiteralPath pluginval.zip -DestinationPath pluginval -Force
           $vst3 = "$env:GITHUB_WORKSPACE\dist\AudialSynth-Windows\AudialSynth.vst3"
+
+          # --skip-gui-tests is required on a GitHub runner, not a workaround for a plugin
+          # bug: the editor asks for an OpenGL 3.2 context (FullInterface's
+          # setOpenGLVersionRequired/attachTo), and these headless runners have no GPU - only
+          # Microsoft's software OpenGL 1.1 rasterizer - so the context never becomes current
+          # and pluginval's "Editor" test sits there until its 30s timeout. Everything that
+          # does not need a window still runs, at strictness 5: scan, cold/warm open, plugin
+          # info, programs, parameters, state save/restore and the audio-processing tests.
+          # The editor is exercised on macOS instead (and by anyone running the standalone).
           # pluginval forks a child process for the validation; wait on it for the real exit code.
-          $p = Start-Process -FilePath ".\pluginval\pluginval.exe" -ArgumentList @("--strictness-level", "5", "--validate", $vst3) -NoNewWindow -Wait -PassThru
+          $p = Start-Process -FilePath ".\pluginval\pluginval.exe" -ArgumentList @("--strictness-level", "5", "--skip-gui-tests", "--validate", $vst3) -NoNewWindow -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "pluginval failed with exit code $($p.ExitCode)" }
 
       - name: Zip and checksum
