@@ -620,6 +620,26 @@ survive being turned into `-DAUDIAL_API_BASE_URL="https://..."` on the clang com
 `scripts/build_linux_vst3.sh` / `docker/Dockerfile.linux-vst3` need no `AUDIAL_ENV` handling:
 the Linux VST3 build is the render-engine side and never talks to the Audial API.
 
+## Sign in with Audial (2026-10-07)
+
+The Resynth panel has a "Sign in with Audial" button, so nobody has to copy a user id and API
+key from the website. It runs the OAuth device flow against the Audial API
+(`AudialDeviceLogin` in `src/common/audial_client.h`): `POST /api/auth/device/code`, open
+`verification_uri_complete` in the browser, poll `POST /api/auth/device/token` until the user
+approves. Approval returns an API key named "Audial Synth on <computer>".
+
+The sign-in is saved by `AudialSignIn` to `~/.audial/credentials.json` (mode 0600;
+`%APPDATA%\Audial\credentials.json` on Windows). That file is shared with the text2vox
+plugin, the `audial` command line and the Audial MCP server: signing in to any one signs in
+all of them. It records the API that issued the key (`api_base_url`) and is ignored by a build
+baked for a different `AUDIAL_ENV`. `AudialSignIn::inUse()` picks the credentials for a
+request: the sign-in when there is one, otherwise the user id and API key typed into the
+panel (`LoadSave::loadAudialCredentials()`, unchanged).
+
+All of it lives in `audial_client.h/.cpp` and `resynth_section.h/.cpp`, which every exporter
+already compiles, so no project file changed. Tests: `Audial Client` covers the response
+parsing, the sign-in file (in a temp file, never the real one) and `inUse()`.
+
 ## The Windows build runs in CI (2026-10-12)
 
 There is no local Windows machine, so `.github/workflows/windows-build.yml` *is* the Windows

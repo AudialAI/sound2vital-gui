@@ -5,7 +5,175 @@
 
 #include "json/json.h"
 
+#if !JUCE_WINDOWS
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 using json = nlohmann::json;
+
+namespace {
+  // The form the Audial SDK stores: the API root including "/api", no trailing slash.
+  String storedBaseUrl(const String& base_url) {
+    return base_url.trimCharactersAtEnd("/") + "/api";
+  }
+
+  String stringField(const json& object, const char* name) {
+    if (object.count(name) && object[name].is_string())
+      return String(object[name].get<std::string>());
+    return String();
+  }
+
+  HttpResult postJson(const String& url, const json& body, const String& extra_headers = String()) {
+    HttpResult result;
+    std::unique_ptr<InputStream> stream = URL(url).withPOSTData(String(body.dump())).createInputStream(
+        true, nullptr, nullptr, "Content-Type: application/json\r\n" + extra_headers,
+        AudialDeviceLogin::kTimeoutMs, nullptr, &result.status, 5, "POST");
+    if (stream != nullptr)
+      result.body = stream->readEntireStreamAsString();
+    return result;
+  }
+} // namespace
+
+File AudialSignIn::defaultFile() {
+#if JUCE_WINDOWS
+  return File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile("Audial").getChildFile("credentials.json");
+#else
+  return File::getSpecialLocation(File::userHomeDirectory).getChildFile(".audial").getChildFile("credentials.json");
+#endif
+}
+
+AudialSignIn AudialSignIn::load(const String& base_url, const File& file) {
+  AudialSignIn sign_in;
+  if (!file.existsAsFile())
+    return sign_in;
+  json parsed = json::parse(file.loadFileAsString().toStdString(), nullptr, false);
+  if (parsed.is_discarded() || !parsed.is_object() || stringField(parsed, "api_base_url") != storedBaseUrl(base_url))
+    return sign_in;
+  sign_in.api_key = stringField(parsed, "api_key");
+  sign_in.user_id = stringField(parsed, "user_id");
+  sign_in.email = stringField(parsed, "email");
+  sign_in.key_name = stringField(parsed, "key_name");
+  if (!sign_in.valid())
+    return AudialSignIn();
+  return sign_in;
+}
+
+bool AudialSignIn::save(const String& base_url, const File& file) const {
+  json data;
+  data["api_key"] = api_key.toStdString();
+  data["user_id"] = user_id.toStdString();
+  if (email.isNotEmpty())
+    data["email"] = email.toStdString();
+  else
+    data["email"] = nullptr;
+  if (key_name.isNotEmpty())
+    data["key_name"] = key_name.toStdString();
+  else
+    data["key_name"] = nullptr;
+  data["api_base_url"] = storedBaseUrl(base_url).toStdString();
+  std::string text = data.dump(2);
+
+  if (!file.getParentDirectory().createDirectory())
+    return false;
+#if JUCE_WINDOWS
+  return file.replaceWithText(String(text));  // %APPDATA% is already private to the user
+#else
+  // Created private from the start, so the key is never readable by other users.
+  int fd = ::open(file.getFullPathName().toRawUTF8(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
+  if (fd < 0)
+    return false;
+  bool written = ::write(fd, text.data(), text.size()) == (ssize_t)text.size();
+  ::fchmod(fd, 0600);
+  ::close(fd);
+  return written;
+#endif
+}
+
+void AudialSignIn::clear(const File& file) {
+  file.deleteFile();
+}
+
+AudialCredentials AudialSignIn::inUse(const AudialCredentials& typed, const File& file) {
+  AudialCredentials credentials = typed;
+  if (credentials.base_url.isEmpty())
+    credentials.base_url = AudialClient::kAudialApiBaseUrl;
+  AudialSignIn sign_in = load(credentials.base_url, file);
+  if (sign_in.valid()) {
+    credentials.user_id = sign_in.user_id;
+    credentials.api_key = sign_in.api_key;
+  }
+  return credentials;
+}
+
+AudialDeviceLogin::Pending AudialDeviceLogin::parseStart(int status, const String& body) {
+  Pending pending;
+  json parsed = json::parse(body.toStdString(), nullptr, false);
+  if (status != 200 || parsed.is_discarded() || !parsed.is_object())
+    return pending;
+  pending.device_code = stringField(parsed, "device_code");
+  pending.user_code = stringField(parsed, "user_code");
+  pending.verification_url = stringField(parsed, "verification_uri_complete");
+  if (parsed.count("expires_in") && parsed["expires_in"].is_number())
+    pending.expires_in_seconds = jmax(1, parsed["expires_in"].get<int>());
+  if (parsed.count("interval") && parsed["interval"].is_number())
+    pending.interval_seconds = jlimit(1, 60, parsed["interval"].get<int>());
+  return pending;
+}
+
+AudialDeviceLogin::PollResult AudialDeviceLogin::parsePoll(int status, const String& body) {
+  PollResult result;
+  json parsed = json::parse(body.toStdString(), nullptr, false);
+  if (parsed.is_discarded() || !parsed.is_object())
+    return result;
+  if (status == 200) {
+    result.sign_in.api_key = stringField(parsed, "api_key");
+    result.sign_in.user_id = stringField(parsed, "user_id");
+    result.sign_in.email = stringField(parsed, "email");
+    result.sign_in.key_name = stringField(parsed, "key_name");
+    result.state = result.sign_in.valid() ? State::kApproved : State::kFailed;
+    return result;
+  }
+  String error = stringField(parsed, "error");
+  if (error == "authorization_pending" || error == "slow_down")
+    result.state = State::kPending;
+  else if (error == "access_denied")
+    result.state = State::kDenied;
+  else if (error == "expired_token")
+    result.state = State::kExpired;
+  return result;
+}
+
+AudialDeviceLogin::Pending AudialDeviceLogin::start(const String& base_url, const String& client_name) {
+  json body;
+  body["client_name"] = client_name.toStdString();
+  body["device_name"] = deviceName().toStdString();
+  HttpResult response = postJson(base_url + "/api/auth/device/code", body);
+  return parseStart(response.status, response.body);
+}
+
+AudialDeviceLogin::PollResult AudialDeviceLogin::poll(const String& base_url, const String& device_code) {
+  json body;
+  body["device_code"] = device_code.toStdString();
+  HttpResult response = postJson(base_url + "/api/auth/device/token", body);
+  // No answer at all (offline for a moment) is not a refusal: keep waiting.
+  if (response.status == 0) {
+    PollResult waiting;
+    waiting.state = State::kPending;
+    return waiting;
+  }
+  return parsePoll(response.status, response.body);
+}
+
+void AudialDeviceLogin::revoke(const String& base_url, const String& api_key) {
+  postJson(base_url + "/api/auth/revoke", json::object(), "x-api-key: " + api_key + "\r\n");
+}
+
+String AudialDeviceLogin::deviceName() {
+  String name = SystemStats::getComputerName().upToFirstOccurrenceOf(".", false, false).trim();
+  return name.isNotEmpty() ? name : String("this computer");
+}
 
 String HttpResult::describe() const {
   if (status == 0)
@@ -16,6 +184,8 @@ String HttpResult::describe() const {
     if (message.isNotEmpty())
       return message;
   }
+  if (status == 401 || status == 403)
+    return "Audial did not accept the sign-in. Sign in again (or check your API key)";
   return "HTTP " + String(status) + ": " + (body.isEmpty() ? String("<empty>") : body.substring(0, 160));
 }
 
