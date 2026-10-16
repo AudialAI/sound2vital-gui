@@ -389,8 +389,9 @@ void ResynthSection::startJob(const File& sample) {
     setState(State::kError, reason);
     return;
   }
-  if (!credentialsInUse().complete())
-    saveCredentialsFromFields();  // an API key typed into the fields but not saved yet
+  // Not signed in: whatever is in the key fields is what the job uses, saved or not.
+  if (!AudialSignIn::load(AudialClient::kAudialApiBaseUrl).valid())
+    saveCredentialsFromFields();
   if (!credentialsInUse().complete()) {
     setState(State::kError, "Sign in with Audial first");
     return;
