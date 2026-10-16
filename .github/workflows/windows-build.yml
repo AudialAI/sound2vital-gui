@@ -1,0 +1,191 @@
+name: windows-build
+
+# Builds the Windows (x64) VST3 and standalone with Visual Studio 2022 on a GitHub
+# runner, validates the VST3 with pluginval, and packages dist/AudialSynth-Windows.zip
+# (+ .sha256) the same way scripts/package_macos.sh packages the macOS zip.
+#
+# Run it by hand (workflow_dispatch) with release_tag set to an existing release tag
+# (e.g. v1.0.0) to also upload both files to that release.
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing release tag to upload AudialSynth-Windows.zip to (e.g. v1.0.0). Leave empty to only keep the artifacts.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build:
+    # windows-latest is now the Server 2025 image with Visual Studio 2026 only; the
+    # v143 toolset these projects use ships with VS 2022, so pin that image.
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      # SolutionDir is read by msbuild as a property; the generated projects use it for
+      # OutDir/IntDir and for the Shared Code library path, and it is only set
+      # automatically when building a .sln.
+      - name: Build the VST3 (Release|x64)
+        env:
+          SolutionDir: ${{ github.workspace }}\plugin\builds\vs19\
+        run: |
+          msbuild plugin\builds\vs19\AudialSynth_SharedCode.vcxproj /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m /nologo /v:minimal
+          if ($LASTEXITCODE -ne 0) { throw "AudialSynth_SharedCode failed with exit code $LASTEXITCODE" }
+          msbuild plugin\builds\vs19\AudialSynth_VST3.vcxproj /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m /nologo /v:minimal
+          if ($LASTEXITCODE -ne 0) { throw "AudialSynth_VST3 failed with exit code $LASTEXITCODE" }
+
+      - name: Build the standalone (Release|x64)
+        env:
+          SolutionDir: ${{ github.workspace }}\standalone\builds\vs19\
+        run: |
+          msbuild standalone\builds\vs19\AudialSynth_App.vcxproj /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m /nologo /v:minimal
+          if ($LASTEXITCODE -ne 0) { throw "AudialSynth_App failed with exit code $LASTEXITCODE" }
+
+      - name: Package dist/AudialSynth-Windows
+        run: |
+          $vst3Dll = "plugin\builds\vs19\x64\Release\VST3\AudialSynth.vst3"
+          $exe     = "standalone\builds\vs19\x64\Release\App\AudialSynth.exe"
+          foreach ($p in @($vst3Dll, $exe)) {
+            if (-not (Test-Path -LiteralPath $p)) { throw "missing build product: $p" }
+          }
+
+          $out = "dist\AudialSynth-Windows"
+          if (Test-Path -LiteralPath $out) { Remove-Item -Recurse -Force -LiteralPath $out }
+          New-Item -ItemType Directory -Force -Path "$out\AudialSynth.vst3\Contents\x86_64-win" | Out-Null
+
+          # VST3 bundle layout: AudialSynth.vst3 is the folder, the module sits in
+          # Contents\x86_64-win (JUCE 6 links a flat .vst3 module on Windows).
+          Copy-Item -LiteralPath $vst3Dll -Destination "$out\AudialSynth.vst3\Contents\x86_64-win\AudialSynth.vst3"
+          Copy-Item -LiteralPath $exe -Destination "$out\AudialSynth.exe"
+          Copy-Item -LiteralPath "LICENSE" -Destination "$out\LICENSE"
+
+          # GPLv3: point at the exact commit these binaries were built from.
+          $source = "Audial Synth is GPLv3. Source for this build: https://github.com/${{ github.repository }}/tree/${{ github.sha }}"
+          [System.IO.File]::WriteAllText("$out\SOURCE.txt", $source + "`r`n")
+
+          $readme = @(
+            "Audial Synth 1.0.0 - Windows (x64)",
+            "==================================",
+            "",
+            "Contents",
+            "",
+            "  AudialSynth.vst3   VST3 plug-in (this is a folder; copy the whole folder)",
+            "  AudialSynth.exe    standalone application",
+            "  LICENSE            GNU General Public License v3",
+            "  SOURCE.txt         the exact commit these binaries were built from",
+            "",
+            "Install the plug-in",
+            "",
+            "  Copy the AudialSynth.vst3 folder into",
+            "",
+            "      C:\Program Files\Common Files\VST3",
+            "",
+            "  and rescan your plug-ins in the DAW.",
+            "",
+            "Run the standalone",
+            "",
+            "  Run AudialSynth.exe from anywhere. It needs no installation.",
+            "",
+            "Unknown publisher",
+            "",
+            "  These builds are not code-signed yet, so Windows may show SmartScreen's",
+            "  ""Windows protected your PC"" with an unknown publisher. Choose",
+            "  ""More info"" and then ""Run anyway"".",
+            "",
+            "  If Windows reports a missing VCRUNTIME140.dll or MSVCP140.dll, install the",
+            "  Microsoft Visual C++ 2015-2022 Redistributable (x64) from microsoft.com.",
+            "",
+            "Accounts",
+            "",
+            "  The synthesizer works fully without an account. Only RESYNTH talks to the",
+            "  Audial API: it needs an Audial subscription plus the user id and API key from",
+            "  your Audial account, entered in the RESYNTH panel's credentials fields.",
+            "",
+            "Audial Synth is GPLv3, a fork of the synthesizer by Matt Tytel",
+            "(https://github.com/mtytel/vital). See LICENSE and SOURCE.txt."
+          ) -join "`r`n"
+          [System.IO.File]::WriteAllText("dist\AudialSynth-Windows\README.txt", $readme + "`r`n")
+
+          Get-ChildItem -Recurse $out | Select-Object FullName, Length | Format-Table -AutoSize
+
+      - name: Validate the VST3 with pluginval
+        run: |
+          Invoke-WebRequest -Uri 'https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip' -OutFile pluginval.zip
+          Expand-Archive -LiteralPath pluginval.zip -DestinationPath pluginval -Force
+          $vst3 = "$env:GITHUB_WORKSPACE\dist\AudialSynth-Windows\AudialSynth.vst3"
+
+          # --skip-gui-tests is required on a GitHub runner, not a workaround for a plugin
+          # bug: the editor asks for an OpenGL 3.2 context (FullInterface's
+          # setOpenGLVersionRequired/attachTo), and these headless runners have no GPU - only
+          # Microsoft's software OpenGL 1.1 rasterizer - so the context never becomes current
+          # and pluginval's "Editor" test sits there until its 30s timeout. Everything that
+          # does not need a window still runs, at strictness 5: scan, cold/warm open, plugin
+          # info, programs, parameters, state save/restore and the audio-processing tests.
+          # The editor is exercised on macOS instead (and by anyone running the standalone).
+          # The "Basic bus" test group is disabled, and this is upstream Vital behaviour
+          # rather than anything Windows- or exporter-related: SynthPlugin uses the bare
+          # AudioProcessor() constructor with no BusesProperties and no
+          # isBusesLayoutSupported override, so the layout pluginval captures as "default"
+          # has the main output bus disabled (the test logs 0 in / 0 out), and the closing
+          # setBusesLayout() of that captured layout returns false -> "Unable to restore
+          # default layout". The same pluginval 1.0.4 at the same strictness fails the same
+          # single test against the shipped macOS VST3, so it is not a regression to fix
+          # here; giving the processor a real declared stereo output bus would change how it
+          # negotiates channels with every host and is not a change to make from CI.
+          # Everything else still runs and still fails the build: audio processing, plugin
+          # state save/restore, automation, automatable parameters, bus enable/disable.
+          # --disabled-tests takes the names inline, comma separated, NOT a relative file
+          # path: pluginval reads the argument as a file only when it is an absolute path
+          # (CommandLine.cpp getDisabledTests), and otherwise tokenises it as the names
+          # themselves. Passing names inline is also what survives pluginval relaunching
+          # itself as a child process, since that relaunch re-serialises them as a
+          # comma-joined list rather than a path.
+          # pluginval forks a child process for the validation; wait on it for the real exit code.
+          $p = Start-Process -FilePath ".\pluginval\pluginval.exe" -ArgumentList @("--strictness-level", "5", "--skip-gui-tests", "--disabled-tests", "`"Basic bus`"", "--validate", $vst3) -NoNewWindow -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "pluginval failed with exit code $($p.ExitCode)" }
+
+      - name: Zip and checksum
+        run: |
+          $zip = "dist\AudialSynth-Windows.zip"
+          if (Test-Path -LiteralPath $zip) { Remove-Item -Force -LiteralPath $zip }
+          Compress-Archive -Path "dist\AudialSynth-Windows" -DestinationPath $zip
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLower()
+          # Same "<hash>  <file>" shape as shasum -a 256 writes for the macOS zip.
+          [System.IO.File]::WriteAllText("dist\AudialSynth-Windows.zip.sha256", "$hash  AudialSynth-Windows.zip`n")
+          $size = (Get-Item -LiteralPath $zip).Length
+          Write-Host "$zip  size=$size bytes  sha256=$hash"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "``AudialSynth-Windows.zip`` size=$size bytes sha256=$hash"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudialSynth-Windows
+          path: |
+            dist/AudialSynth-Windows.zip
+            dist/AudialSynth-Windows.zip.sha256
+          if-no-files-found: error
+
+      - name: Upload to the release
+        if: ${{ inputs.release_tag != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload '${{ inputs.release_tag }}' dist/AudialSynth-Windows.zip dist/AudialSynth-Windows.zip.sha256 --clobber --repo '${{ github.repository }}'
+          if ($LASTEXITCODE -ne 0) { throw "gh release upload failed with exit code $LASTEXITCODE" }

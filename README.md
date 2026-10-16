@@ -1,8 +1,11 @@
 # Audial Synth
 
-Audial Synth is a polyphonic wavetable synthesizer: spectral warping oscillators, a wavetable
-editor, a modulation matrix with real-time graphical feedback, and a full effects chain. It builds
-as a VST3, an Audio Unit, an LV2 and a standalone application.
+[Audial Synth](https://audialmusic.ai) is a polyphonic wavetable synthesizer: spectral warping
+oscillators, a wavetable editor, a modulation matrix with real-time graphical feedback, and a
+full effects chain. It builds as a VST3, an Audio Unit, an LV2 and a standalone application.
+Prebuilt macOS and Windows binaries are on
+[audialmusic.ai/downloads](https://audialmusic.ai/downloads) and the
+[releases page](https://github.com/AudialAI/sound2vital-gui/releases).
 
 It is a GPLv3 fork of the synthesizer written by Matt Tytel, whose source is at
 [github.com/mtytel/vital](https://github.com/mtytel/vital). Audial Synth is not affiliated with or
@@ -35,6 +38,28 @@ the plug-ins the first time.
 
 The Audial API base URL is baked in at build time via `AUDIAL_ENV` (default `prod`; see
 `docs/build-notes.md`), e.g. `AUDIAL_ENV=dev scripts/build_macos.sh` for the staging API.
+
+### Windows (VST3, standalone)
+
+There is no local Windows machine, so the Windows x64 build is produced by GitHub Actions
+(`.github/workflows/windows-build.yml`, see `docs/build-notes.md`). Download
+`AudialSynth-Windows.zip` from the [releases page](https://github.com/AudialAI/sound2vital-gui/releases)
+or [audialmusic.ai/downloads](https://audialmusic.ai/downloads); a `.sha256` ships next to it.
+
+To install the plug-in, copy the `AudialSynth.vst3` folder - the whole folder, it is a bundle, not
+a single file - into
+
+```
+C:\Program Files\Common Files\VST3
+```
+
+creating that folder if it is not already there, and rescan plug-ins in your DAW. The standalone
+`AudialSynth.exe` runs from anywhere and needs no installation.
+
+These builds are not code-signed yet, so the first launch may bring up Windows SmartScreen's
+"Windows protected your PC" with an unknown publisher: choose **More info**, then **Run anyway**.
+If Windows reports a missing `VCRUNTIME140.dll` or `MSVCP140.dll`, install the Microsoft Visual
+C++ 2015-2022 Redistributable (x64).
 
 ### Linux VST3
 
@@ -80,3 +105,7 @@ Audial Synth is licensed under the GNU General Public License v3 or later; see `
 distribute a binary you must make the corresponding source available under the same licence.
 Presets, wavetables and other content distributed by the upstream project are under separate
 licences and are not redistributed here.
+
+---
+
+Powered by [Audial](https://audialmusic.ai).
