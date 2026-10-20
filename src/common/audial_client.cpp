@@ -7,6 +7,23 @@
 
 using json = nlohmann::json;
 
+namespace {
+  // One entry of /api/functions/status: {"function": "sound2vital", "warm": true, "queued": 0,
+  // "expectedColdStartMs": ..., "expectedRunMs": ...}. Only "warm" is used here; the estimates
+  // are deliberately not shown in the plugin, where the progress bar already carries one.
+  bool readFunctionStatusEntry(const json& entry, const String& function,
+                               AudialClient::FunctionStatus& status) {
+    if (!entry.is_object() || !entry.count("warm") || !entry["warm"].is_boolean())
+      return false;
+    if (function.isNotEmpty() && entry.count("function") && entry["function"].is_string() &&
+        String(entry["function"].get<std::string>()) != function)
+      return false;
+    status.known = true;
+    status.warm = entry["warm"].get<bool>();
+    return true;
+  }
+} // namespace
+
 String HttpResult::describe() const {
   if (status == 0)
     return "no connection (check base URL / network)";
@@ -67,6 +84,11 @@ AudialClient::ExecutionStatus AudialClient::parseExecution(const String& body) {
     status.state = String(parsed["state"].get<std::string>());
   if (parsed.count("error") && parsed["error"].is_string())
     status.error = String(parsed["error"].get<std::string>());
+  if (parsed.count("warmup") && parsed["warmup"].is_object()) {
+    const json& warmup = parsed["warmup"];
+    if (warmup.count("state") && warmup["state"].is_string())
+      status.warmup_state = String(warmup["state"].get<std::string>());
+  }
   if (parsed.count("preset") && parsed["preset"].is_object()) {
     for (auto& entry : parsed["preset"].items()) {
       if (entry.value().is_object() && entry.value().count("url") && entry.value()["url"].is_string()) {
@@ -80,6 +102,54 @@ AudialClient::ExecutionStatus AudialClient::parseExecution(const String& body) {
   return status;
 }
 
+AudialClient::FunctionStatus AudialClient::parseFunctionStatus(const String& body, const String& function) {
+  FunctionStatus status;
+  json parsed = json::parse(body.toStdString(), nullptr, false);
+  if (parsed.is_discarded())
+    return status;
+
+  // ?function=<name> is expected to answer with that one function's object. A list (the
+  // unfiltered form of the same route) or a map keyed by function name is read too, so the
+  // indicator keeps working if the route's shape grows; anything else leaves known = false.
+  if (readFunctionStatusEntry(parsed, function, status))
+    return status;
+
+  const json* list = nullptr;
+  if (parsed.is_array())
+    list = &parsed;
+  else if (parsed.is_object() && parsed.count("functions") && parsed["functions"].is_array())
+    list = &parsed["functions"];
+  if (list != nullptr) {
+    for (const json& entry : *list) {
+      if (readFunctionStatusEntry(entry, function, status))
+        return status;
+    }
+    return status;
+  }
+
+  if (parsed.is_object() && function.isNotEmpty() && parsed.count(function.toStdString()))
+    readFunctionStatusEntry(parsed[function.toStdString()], String(), status);
+  return status;
+}
+
+String AudialClient::warmupMessage(const String& warmup_state) {
+  // Same sentences as the website pill and the SDK/MCP progress lines. "\xe2\x80\x94" is the
+  // em dash, written as UTF-8 bytes so no compiler has to guess this file's encoding.
+  if (warmup_state == "initializing")
+    return String(CharPointer_UTF8("Warming up the machine \xe2\x80\x94 the first request takes a few "
+                                   "minutes longer than usual; every run after this is faster"));
+  if (warmup_state == "working")
+    return "Working on your job";
+  // "cold" is written at dispatch, before any worker is seen starting, and "done" means the
+  // job finished; neither is worth a line of its own in a one-line status.
+  return "";
+}
+
+String AudialClient::clientHeaders() {
+  String tag = String(kClientName) + "/" + kClientVersion;
+  return "x-audial-client: " + tag + "\r\nUser-Agent: " + tag + " (JUCE)\r\n";
+}
+
 String AudialClient::authHeaders() const {
   return "x-api-key: " + credentials_.api_key + "\r\nx-user-id: " + credentials_.user_id + "\r\n";
 }
@@ -91,9 +161,11 @@ bool AudialClient::onStreamProgress(void* context, int, int) {
 
 HttpResult AudialClient::request(URL url, bool post_like, const String& method, const String& extra_headers) {
   HttpResult result;
+  // Every request to the Audial API identifies the plugin: the backend attributes executions
+  // to it by x-audial-client, and JUCE would otherwise send its own default User-Agent.
   std::unique_ptr<InputStream> stream = url.createInputStream(post_like, onStreamProgress, cancel_flag_,
-                                                              extra_headers, kTimeoutMs, nullptr,
-                                                              &result.status, 5, method);
+                                                              clientHeaders() + extra_headers, kTimeoutMs,
+                                                              nullptr, &result.status, 5, method);
   if (stream != nullptr)
     result.body = stream->readEntireStreamAsString();
   return result;
@@ -132,6 +204,12 @@ HttpResult AudialClient::runSound2Vital(const String& filename, const String& fi
 HttpResult AudialClient::getExecution(const String& exe_id) {
   URL url(credentials_.base_url + "/api/db/" + URL::addEscapeChars(credentials_.user_id, false) +
           "/execution/" + URL::addEscapeChars(exe_id, false));
+  return request(url, false, "GET", authHeaders());
+}
+
+HttpResult AudialClient::getFunctionStatus(const String& function) {
+  URL url(credentials_.base_url + "/api/functions/status?function=" +
+          URL::addEscapeChars(function, true));
   return request(url, false, "GET", authHeaders());
 }
 

@@ -716,3 +716,58 @@ The `vs19` projects were renamed and reconfigured from upstream's `Vial_*` targe
 `AudialSynth_*`. The Xcode projects are separate files, so `scripts/build_macos.sh Release
 AudialSynth` was re-run afterwards to confirm: three `** BUILD SUCCEEDED **`, producing
 `AudialSynth.vst3`, `AudialSynth.component`, `libAudialSynth.a` and `AudialSynth.app`.
+
+## v1.0.1: the version define, the client header, and the warm-up status (2026-10-20)
+
+### Which version is the Audial version
+
+Two version numbers live in this fork and they are not the same number:
+
+- `JUCE_APP_VERSION` (and `JucePlugin_Version*`) is the **Audial** release version, generated
+  from the `version="..."` attribute of `plugin/vital.jucer`, `standalone/vital.jucer` and
+  `tests/vital.jucer`. The .jucer files are the place to bump it, but Projucer is not run here,
+  so the generated copies are edited to match by hand: `plugin/JuceLibraryCode/JucePluginDefines.h`,
+  the `osx` Xcode projects plus their `Info-*.plist`
+  (`CFBundleShortVersionString`/`CFBundleVersion`), the `vs19` `.vcxproj` files, and the
+  `linux`/`linux_vst`/`linux_lv2` makefiles. `grep -rn "JUCE_APP_VERSION=" plugin standalone tests`
+  should come back all one number.
+- `ProjectInfo::versionString` in each `JuceLibraryCode/JuceHeader.h` stays on upstream Vital's
+  **1.0.6**. It is written into every saved patch as `synth_version` and compared against when
+  one is loaded (`LoadSave::compareVersionStrings`), so moving it to an Audial number would make
+  this build claim preset-format ancestry it does not have. It is left alone deliberately.
+
+`AudialClient::kClientVersion` is the first of the two (`AUDIAL_SYNTH_VERSION`, stringified from
+`JUCE_APP_VERSION`), with a literal fallback for any build with no exporter define.
+
+### Every API request names the plugin
+
+`AudialClient::request()` prepends `AudialClient::clientHeaders()` to the per-request headers, so
+`x-audial-client: audial-synth/<version>` and `User-Agent: audial-synth/<version> (JUCE)` go out
+with the upload, the run call, the execution poll and the function-status probe. The API maps
+`audial-synth` to its `resynth` client in the adoption figures; without the header it has to
+guess from JUCE's default User-Agent.
+
+`downloadToFile()` is deliberately left out: it fetches the finished preset from the storage URL
+the API handed back, which is not an Audial API route.
+
+### The warm-up status
+
+`execution.warmup.state` is read out of the poll the panel already makes
+(`/api/db/{user}/execution/{exe}`) and, while it says `initializing` or `working`, it owns the
+status line through the one copy in `AudialClient::warmupMessage()` — the same sentences the
+website pill, the SDK and the MCP server use. `cold` and `done`, an unknown state, and an
+execution with no `warmup` object at all (a warm worker, or an API that predates the field) all
+fall through to the old "Processing... N s of about M s" line, so nothing about a warm run
+changes.
+
+When the panel opens it also fires one `GET /api/functions/status?function=sound2vital` on a
+short-lived thread (`ResynthSection::StatusProbe`) and shows a dot next to Browse: green
+"Ready" when the service is warm, amber "Warming up" when it is not. Everything about it is
+best-effort — no credentials yet, a 404 from an API without the route, any other error, or a
+body with no `warm` field leaves the readiness unknown, and unknown hides the dot rather than
+guessing. The probe is cancellable and joined in the destructor like the render job, so closing
+the window mid-request does not wait out the socket.
+
+`parseFunctionStatus()` accepts the single-object answer the `?function=` query is specified to
+give, and also a `{ functions: [...] }` list or a map keyed by function name, so the indicator
+survives the route being broadened later.

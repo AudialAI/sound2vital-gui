@@ -23,6 +23,11 @@ and effect stays editable like any other preset. The panel holds your Audial use
 (the API base URL is baked into the build, not user-entered); nothing is sent anywhere until you
 drop a file.
 
+A dot next to Browse says whether the Audial service is warm, and if your job has to wait for a
+machine to start the status line says so rather than counting against an estimate that does not
+include the start-up. Requests carry `x-audial-client: audial-synth/<version>` so renders made
+here are attributed to the synth; see `docs/build-notes.md`.
+
 ## Building
 
 ### macOS (VST3, AU, standalone)
