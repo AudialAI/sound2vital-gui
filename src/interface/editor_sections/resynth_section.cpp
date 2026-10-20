@@ -10,14 +10,18 @@
 ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRoundedRectangleFragment),
                                               drop_zone_(Shaders::kRoundedRectangleFragment),
                                               progress_track_(Shaders::kRoundedRectangleFragment),
-                                              progress_fill_(Shaders::kRoundedRectangleFragment), job_(this) {
+                                              progress_fill_(Shaders::kRoundedRectangleFragment),
+                                              readiness_dot_(Shaders::kCircleFragment), job_(this),
+                                              status_probe_(this) {
   format_manager_.registerBasicFormats();
   addOpenGlComponent(&body_);
   addOpenGlComponent(&drop_zone_);
   addOpenGlComponent(&progress_track_);
   addOpenGlComponent(&progress_fill_);
+  addOpenGlComponent(&readiness_dot_);
   progress_track_.setVisible(false);
   progress_fill_.setVisible(false);
+  readiness_dot_.setVisible(false);
 
   title_text_ = std::make_unique<PlainTextComponent>("title", "Resynth a sample");
   title_text_->setTextSize(20.0f);
@@ -44,6 +48,14 @@ ResynthSection::ResynthSection(String name) : Overlay(name), body_(Shaders::kRou
   credentials_text_->setTextSize(13.0f);
   credentials_text_->setFontType(PlainTextComponent::kLight);
   addOpenGlComponent(credentials_text_.get());
+
+  // Filled in by the /api/functions/status probe when the panel opens; invisible until then.
+  readiness_text_ = std::make_unique<PlainTextComponent>("readiness", "");
+  readiness_text_->setTextSize(11.0f);
+  readiness_text_->setFontType(PlainTextComponent::kLight);
+  readiness_text_->setJustification(Justification::centredLeft);
+  readiness_text_->setVisible(false);
+  addOpenGlComponent(readiness_text_.get());
 
   user_id_ = std::make_unique<OpenGlTextEditor>("User ID");
   api_key_ = std::make_unique<OpenGlTextEditor>("API Key", L'*');
@@ -79,6 +91,10 @@ ResynthSection::~ResynthSection() {
   job_.signalThreadShouldExit();
   job_.notify();
   job_.stopThread(AudialClient::kTimeoutMs + 2000);
+  probe_cancelled_ = true;
+  status_probe_.signalThreadShouldExit();
+  status_probe_.notify();
+  status_probe_.stopThread(AudialClient::kTimeoutMs + 2000);
 }
 
 Rectangle<int> ResynthSection::getPanelRect() {
@@ -112,7 +128,8 @@ void ResynthSection::resized() {
 
   Colour text_color = findColour(Skin::kBodyText, true);
   for (PlainTextComponent* text : { title_text_.get(), help_text_.get(), drop_text_.get(),
-                                    status_text_.get(), credentials_text_.get() })
+                                    status_text_.get(), credentials_text_.get(),
+                                    readiness_text_.get() })
     text->setColor(text_color);
 
   Rectangle<int> panel = getPanelRect();
@@ -126,6 +143,13 @@ void ResynthSection::resized() {
   drop_zone_.setBounds(drop);
   drop_text_->setBounds(drop.getX(), drop.getY() + drop.getHeight() / 2 - 24, drop.getWidth(), 22);
   browse_button_->setBounds(drop.getX() + drop.getWidth() / 2 - 60, drop.getBottom() - kButtonHeight - 10, 120, kButtonHeight);
+
+  // Service readiness, immediately right of the action button: an 8 px dot and a short label.
+  Rectangle<int> browse = browse_button_->getBounds();
+  int dot_size = 8;
+  readiness_dot_.setBounds(browse.getRight() + 12, browse.getCentreY() - dot_size / 2, dot_size, dot_size);
+  readiness_text_->setBounds(readiness_dot_.getRight() + 6, browse.getCentreY() - 9,
+                             drop.getRight() - readiness_dot_.getRight() - 10, 18);
 
   int status_y = drop.getBottom() + 12;
   status_text_->setBounds(x, status_y, text_width, 22);
@@ -165,6 +189,7 @@ void ResynthSection::setVisible(bool should_be_visible) {
       api_key_->setText(credentials.api_key);
     if (state_ == State::kDone || state_ == State::kError)
       setState(State::kIdle, "");
+    probeFunctionStatus();
     Image image(Image::ARGB, 1, 1, false);
     Graphics g(image);
     paintOpenGlChildrenBackgrounds(g);
@@ -312,6 +337,7 @@ void ResynthSection::setState(State state, const String& message) {
   browse_button_->setVisible(!running);
   progress_track_.setVisible(running);
   progress_fill_.setVisible(running);
+  updateReadinessIndicator();
   if (!running)
     stopTimer();
   repaint();
@@ -323,6 +349,63 @@ void ResynthSection::postState(State state, const String& message) {
     if (safe != nullptr)
       safe.getComponent()->setState(state, message);
   });
+}
+
+void ResynthSection::probeFunctionStatus() {
+  // Only ask when there is something to ask with: the route needs user auth, and a panel
+  // opened before any credentials are entered should not show a misleading dot.
+  if (status_probe_.isThreadRunning() || !LoadSave::loadAudialCredentials().complete())
+    return;
+  probe_cancelled_ = false;
+  status_probe_.startThread();
+}
+
+void ResynthSection::runStatusProbe() {
+  AudialCredentials credentials = LoadSave::loadAudialCredentials();
+  if (!credentials.complete())
+    return;
+  AudialClient client(credentials);
+  client.setCancelFlag(&probe_cancelled_);
+  HttpResult result = client.getFunctionStatus(AudialClient::kResynthFunction);
+  if (status_probe_.threadShouldExit())
+    return;
+  // A 404 from an API that does not serve this route yet, any other error, or a body that
+  // does not carry "warm" all leave the status unknown, and unknown hides the indicator.
+  AudialClient::FunctionStatus status;
+  if (result.ok())
+    status = AudialClient::parseFunctionStatus(result.body, AudialClient::kResynthFunction);
+  postFunctionStatus(status);
+}
+
+void ResynthSection::postFunctionStatus(AudialClient::FunctionStatus status) {
+  Component::SafePointer<ResynthSection> safe(this);
+  MessageManager::callAsync([safe, status] {
+    if (safe != nullptr)
+      safe.getComponent()->setFunctionStatus(status);
+  });
+}
+
+void ResynthSection::setFunctionStatus(AudialClient::FunctionStatus status) {
+  function_status_ = status;
+  updateReadinessIndicator();
+  repaint();
+}
+
+void ResynthSection::updateReadinessIndicator() {
+  State state = state_.load();
+  bool running = state == State::kUploading || state == State::kSubmitting ||
+                 state == State::kProcessing || state == State::kDownloading;
+  // The indicator describes the service before a job is submitted; once one is running the
+  // status line carries the warm-up phase itself, and Browse (what it points at) is hidden.
+  bool show = function_status_.known && !running;
+  if (show) {
+    readiness_text_->setText(function_status_.warm ? "Ready" : "Warming up");
+    // Green for a warm worker, amber for a cold one: the skin has no semantic pair for this,
+    // and these read the same on every shipped skin.
+    readiness_dot_.setColor(function_status_.warm ? Colour(0xff4ec46e) : Colour(0xffe8a33d));
+  }
+  readiness_dot_.setVisible(show);
+  readiness_text_->setVisible(show);
 }
 
 void ResynthSection::runJob() {
@@ -377,6 +460,15 @@ void ResynthSection::runJob() {
     if (status.state == "failed") {
       postState(State::kError, status.error);
       return;
+    }
+    // A cold endpoint: the API writes execution.warmup.state and keeps it current, so say
+    // what is happening instead of counting against an estimate that does not include the
+    // machine starting up. Warm jobs carry no warmup object and keep the elapsed/estimate
+    // line below; so do the "cold" and "done" phases, which have no message of their own.
+    String warmup_message = AudialClient::warmupMessage(status.warmup_state);
+    if (warmup_message.isNotEmpty()) {
+      postState(State::kProcessing, warmup_message);
+      continue;
     }
     int seconds = (int)((Time::getMillisecondCounter() - job_started_ms_.load()) / 1000);
     int expected = (int)estimate_seconds_;

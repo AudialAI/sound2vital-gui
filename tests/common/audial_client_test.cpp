@@ -77,6 +77,65 @@ class AudialClientTest : public UnitTest {
       AudialClient::ExecutionStatus failed_silently = AudialClient::parseExecution("{\"state\":\"failed\"}");
       expectEquals(failed_silently.error, String("Audial job failed"));
 
+      beginTest("parse execution warm-up phase");
+      expectEquals(AudialClient::parseExecution(
+                       "{\"state\":\"processing\",\"warmup\":{\"state\":\"initializing\",\"delayMs\":12}}").warmup_state,
+                   String("initializing"));
+      expectEquals(AudialClient::parseExecution(
+                       "{\"state\":\"processing\",\"warmup\":{\"state\":\"working\"}}").warmup_state,
+                   String("working"));
+      // A warm job carries no warmup object, and an older API none at all.
+      expect(AudialClient::parseExecution("{\"state\":\"processing\"}").warmup_state.isEmpty());
+      expect(AudialClient::parseExecution("{\"state\":\"processing\",\"warmup\":null}").warmup_state.isEmpty());
+      expect(AudialClient::parseExecution("{\"state\":\"processing\",\"warmup\":{}}").warmup_state.isEmpty());
+
+      beginTest("warm-up messages are the shared copy, and only for the two live phases");
+      expect(AudialClient::warmupMessage("initializing").startsWith("Warming up the machine"));
+      expect(AudialClient::warmupMessage("initializing").contains("every run after this is faster"));
+      expectEquals(AudialClient::warmupMessage("working"), String("Working on your job"));
+      expect(AudialClient::warmupMessage("cold").isEmpty());
+      expect(AudialClient::warmupMessage("done").isEmpty());
+      expect(AudialClient::warmupMessage("").isEmpty());
+      expect(AudialClient::warmupMessage("something-new").isEmpty());
+
+      beginTest("every request identifies the plugin");
+      String headers = AudialClient::clientHeaders();
+      String tag = String("audial-synth/") + AudialClient::kClientVersion;
+      expectEquals(headers, String("x-audial-client: " + tag + "\r\nUser-Agent: " + tag + " (JUCE)\r\n"));
+      // The version comes from the exporters' JUCE_APP_VERSION define, i.e. from the .jucer
+      // projects; it is not Vital's ProjectInfo::versionString, which presets are stamped with.
+      expect(String(AudialClient::kClientVersion).containsChar('.'));
+      expect(String(AudialClient::kClientVersion) != String(ProjectInfo::versionString));
+
+      beginTest("parse function status");
+      // The shape the route answers a ?function= query with.
+      AudialClient::FunctionStatus warm = AudialClient::parseFunctionStatus(
+          "{\"function\":\"sound2vital\",\"warm\":true,\"queued\":0,\"expectedColdStartMs\":180000}",
+          "sound2vital");
+      expect(warm.known);
+      expect(warm.warm);
+      AudialClient::FunctionStatus cold = AudialClient::parseFunctionStatus(
+          "{\"function\":\"sound2vital\",\"warm\":false}", "sound2vital");
+      expect(cold.known);
+      expect(!cold.warm);
+      // A list or a map keyed by function name is read too, so the indicator survives the
+      // route answering with every function.
+      AudialClient::FunctionStatus from_list = AudialClient::parseFunctionStatus(
+          "{\"functions\":[{\"function\":\"text2vox\",\"warm\":false},{\"function\":\"sound2vital\",\"warm\":true}]}",
+          "sound2vital");
+      expect(from_list.known);
+      expect(from_list.warm);
+      AudialClient::FunctionStatus from_map = AudialClient::parseFunctionStatus(
+          "{\"sound2vital\":{\"warm\":false}}", "sound2vital");
+      expect(from_map.known);
+      expect(!from_map.warm);
+      // Unknown stays unknown: another function, no "warm", a 404 body, or nothing at all.
+      expect(!AudialClient::parseFunctionStatus("{\"function\":\"text2vox\",\"warm\":true}", "sound2vital").known);
+      expect(!AudialClient::parseFunctionStatus("{\"function\":\"sound2vital\"}", "sound2vital").known);
+      expect(!AudialClient::parseFunctionStatus("{\"error\":\"Not found\"}", "sound2vital").known);
+      expect(!AudialClient::parseFunctionStatus("<html>", "sound2vital").known);
+      expect(!AudialClient::parseFunctionStatus("", "sound2vital").known);
+
       beginTest("network timeout is bounded");
       // ~ResynthSection waits kTimeoutMs + 2000 ms for the job thread, so this constant is what a
       // host is blocked for in the worst case when its window is closed mid-transfer.

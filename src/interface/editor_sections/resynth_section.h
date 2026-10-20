@@ -44,6 +44,16 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
         ResynthSection* section_;
     };
 
+    // One GET /api/functions/status?function=sound2vital when the panel opens, off the message
+    // thread: the answer only drives the ready/warming dot, so a failure is silent.
+    class StatusProbe : public Thread {
+      public:
+        StatusProbe(ResynthSection* section) : Thread("Audial Function Status"), section_(section) { }
+        void run() override { section_->runStatusProbe(); }
+      private:
+        ResynthSection* section_;
+    };
+
     ResynthSection(String name);
     virtual ~ResynthSection();
 
@@ -61,6 +71,7 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     void startJob(const File& sample);
     void cancelJob();
     void runJob();
+    void runStatusProbe();
 
   private:
     Rectangle<int> getPanelRect();
@@ -72,17 +83,23 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     void loadPreset(const File& preset);
     void saveCredentialsFromFields();
     void setTextColors(OpenGlTextEditor* editor, const String& empty_text);
+    void probeFunctionStatus();
+    void postFunctionStatus(AudialClient::FunctionStatus status);
+    void setFunctionStatus(AudialClient::FunctionStatus status);
+    void updateReadinessIndicator();
     bool sampleIsAcceptable(const File& sample, String& reason, double& seconds);
 
     OpenGlQuad body_;
     OpenGlQuad drop_zone_;
     OpenGlQuad progress_track_;
     OpenGlQuad progress_fill_;
+    OpenGlQuad readiness_dot_;
     std::unique_ptr<PlainTextComponent> title_text_;
     std::unique_ptr<PlainTextComponent> help_text_;
     std::unique_ptr<PlainTextComponent> drop_text_;
     std::unique_ptr<PlainTextComponent> status_text_;
     std::unique_ptr<PlainTextComponent> credentials_text_;
+    std::unique_ptr<PlainTextComponent> readiness_text_;
     std::unique_ptr<OpenGlTextEditor> user_id_;
     std::unique_ptr<OpenGlTextEditor> api_key_;
     std::unique_ptr<OpenGlToggleButton> browse_button_;
@@ -93,6 +110,10 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     AudioFormatManager format_manager_;
     std::unique_ptr<FileChooser> chooser_;
     Job job_;
+    StatusProbe status_probe_;
+    // The service readiness shown next to Browse; unknown until the probe answers, and left
+    // unknown when there are no credentials to ask with or the route is missing.
+    AudialClient::FunctionStatus function_status_;
     File sample_;
     double sample_seconds_ = 0.0;
     double estimate_seconds_ = 0.0;
@@ -101,6 +122,8 @@ class ResynthSection : public Overlay, public FileDragAndDropTarget, public Time
     // Handed to AudialClient so a blocked transfer gives up instead of running out
     // the socket timeout; set by cancelJob() and by the destructor.
     std::atomic<bool> cancel_requested_ { false };
+    // The same for the status probe, so closing the window does not wait out its socket.
+    std::atomic<bool> probe_cancelled_ { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResynthSection)
 };

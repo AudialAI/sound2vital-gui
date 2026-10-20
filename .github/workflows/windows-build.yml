@@ -81,7 +81,7 @@ jobs:
           [System.IO.File]::WriteAllText("$out\SOURCE.txt", $source + "`r`n")
 
           $readme = @(
-            "Audial Synth 1.0.0 - Windows (x64)",
+            "Audial Synth 1.0.1 - Windows (x64)",
             "==================================",
             "",
             "Contents",
