@@ -1,10 +1,10 @@
 # Audial Synth
 
-[Audial Synth](https://audialmusic.ai) is a polyphonic wavetable synthesizer: spectral warping
+[Audial Synth](https://audialmusic.ai?utm_source=github&utm_medium=readme&utm_campaign=synth) is a polyphonic wavetable synthesizer: spectral warping
 oscillators, a wavetable editor, a modulation matrix with real-time graphical feedback, and a
 full effects chain. It builds as a VST3, an Audio Unit, an LV2 and a standalone application.
 Prebuilt macOS and Windows binaries are on
-[audialmusic.ai/downloads](https://audialmusic.ai/downloads) and the
+[audialmusic.ai/downloads](https://audialmusic.ai/downloads?utm_source=github&utm_medium=readme&utm_campaign=synth) and the
 [releases page](https://github.com/AudialAI/sound2vital-gui/releases).
 
 It is a GPLv3 fork of the synthesizer written by Matt Tytel, whose source is at
@@ -49,7 +49,7 @@ The Audial API base URL is baked in at build time via `AUDIAL_ENV` (default `pro
 There is no local Windows machine, so the Windows x64 build is produced by GitHub Actions
 (`.github/workflows/windows-build.yml`, see `docs/build-notes.md`). Download
 `AudialSynth-Windows.zip` from the [releases page](https://github.com/AudialAI/sound2vital-gui/releases)
-or [audialmusic.ai/downloads](https://audialmusic.ai/downloads); a `.sha256` ships next to it.
+or [audialmusic.ai/downloads](https://audialmusic.ai/downloads?utm_source=github&utm_medium=readme&utm_campaign=synth); a `.sha256` ships next to it.
 
 To install the plug-in, copy the `AudialSynth.vst3` folder - the whole folder, it is a bundle, not
 a single file - into
@@ -113,4 +113,4 @@ licences and are not redistributed here.
 
 ---
 
-Powered by [Audial](https://audialmusic.ai).
+Powered by [Audial](https://audialmusic.ai?utm_source=github&utm_medium=readme&utm_campaign=synth).
